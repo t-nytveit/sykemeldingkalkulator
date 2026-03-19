@@ -111,6 +111,7 @@
 
         .result-label { font-size: 0.9rem; color: #444; margin-bottom: 5px; }
         .result-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+        .result-detail { font-size: 0.95rem; color: #444; font-weight: 500; margin-top: -5px; margin-bottom: 10px; }
 
         /* Progress Bar */
         .progress-container {
@@ -118,7 +119,7 @@
             background-color: #e9ecef;
             border-radius: 10px;
             height: 10px;
-            margin: 15px 0 5px 0;
+            margin: 10px 0 5px 0;
             overflow: hidden;
         }
         .progress-bar {
@@ -184,6 +185,7 @@
     <div class="result-box">
         <div class="result-label">Timer du skal jobbe pr. uke:</div>
         <div id="result" class="result-value">0,00</div>
+        <div id="resultTimeFormat" class="result-detail">(0 timer og 0 minutter)</div>
         
         <div class="progress-container">
             <div id="progressBar" class="progress-bar"></div>
@@ -201,7 +203,6 @@
 <script>
     document.getElementById('year').textContent = new Date().getFullYear();
 
-    // Last lagrede data fra localStorage ved oppstart
     window.onload = function() {
         const fields = ['stilling', 'sykemelding', 'fullUke', 'startDate', 'endDate'];
         fields.forEach(field => {
@@ -212,7 +213,6 @@
     };
 
     function calculate() {
-        // Hent verdier
         const stilling = parseFloat(document.getElementById('stilling').value) || 0;
         const sykemelding = parseFloat(document.getElementById('sykemelding').value) || 0;
         const fullUke = parseFloat(document.getElementById('fullUke').value) || 37.5;
@@ -226,16 +226,22 @@
         localStorage.setItem('haga_startDate', startVal);
         localStorage.setItem('haga_endDate', endVal);
 
-        // 1. Regn ut timer
+        // 1. Regn ut timer desimal
         const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
-        const timerSkalJobbe = restArbeidsevneFaktor * fullUke;
+        const timerSkalJobbeDesimal = restArbeidsevneFaktor * fullUke;
         
-        document.getElementById('result').innerText = timerSkalJobbe.toLocaleString('no-NO', { 
+        // Oppdater desimalvisning
+        document.getElementById('result').innerText = timerSkalJobbeDesimal.toLocaleString('no-NO', { 
             minimumFractionDigits: 2, 
             maximumFractionDigits: 2 
         });
 
-        // 2. Dato-beregninger og Progress Bar
+        // 2. Regn om til timer og minutter
+        const timerHeltall = Math.floor(timerSkalJobbeDesimal);
+        const minutter = Math.round((timerSkalJobbeDesimal - timerHeltall) * 60);
+        document.getElementById('resultTimeFormat').innerText = `(${timerHeltall} timer og ${minutter} minutter)`;
+
+        // 3. Dato-beregninger og Progress Bar
         const statusBox = document.getElementById('statusInfo');
         if (startVal && endVal) {
             const start = new Date(startVal);
@@ -243,11 +249,9 @@
             const today = new Date();
             today.setHours(0,0,0,0);
 
-            // Arbeidsgiverperiode (16 dager)
             let agEnd = new Date(start);
             agEnd.setDate(start.getDate() + 15);
 
-            // Fremgang
             const total = end - start;
             const current = today - start;
             let percent = 0;
@@ -258,7 +262,6 @@
             document.getElementById('progressBar').style.width = percent + '%';
             document.getElementById('progressLabel').innerText = percent + '% fullført';
 
-            // Statusmelding
             statusBox.style.display = 'block';
             let agStatus = today > agEnd 
                 ? "✅ Arbeidsgiverperioden er over. NAV dekker nå sykepenger." 
