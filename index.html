@@ -131,8 +131,8 @@
     <div class="input-group"><label>Sluttdato</label><input type="date" id="endDate" oninput="calculate()"></div>
     
     <div id="dateError" class="error-msg">⚠️ Sluttdato kan ikke være før startdato!</div>
-    <div id="ruleError" class="error-msg">⚠️ Kan ikke bruke egenmelding før det er gått 16 dager etter forrige fravær. Bruker må ha legeerklæring.</div>
-    <div id="durationError" class="error-msg">⚠️ Egenmelding for egen sykdom kan maks vare i 3 dager. Ved lengre fravær kreves sykemelding fra lege.</div>
+    <div id="ruleError" class="error-msg">⚠️ Kan ikke bruke egenmelding før det er gått 16 dager etter forrige fravær.</div>
+    <div id="durationError" class="error-msg">⚠️ Egenmelding (egen sykdom) kan maks vare i 3 dager.</div>
 
     <div class="result-box">
         <div id="result" class="result-value">0,00</div>
@@ -187,33 +187,27 @@
         const isDateInvalid = startVal && endVal && (end < start);
         document.getElementById('dateError').style.display = isDateInvalid ? 'block' : 'none';
 
-        // 2. Maks 3 dager på egenmelding (Egen sykdom)
+        // 2. Maks 3 dager (Egen sykdom)
         let isDurationInvalid = false;
         if (type === 'Egenmelding' && startVal && endVal) {
-            const diffTime = Math.abs(end - start);
-            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
             if (diffDays > 3) isDurationInvalid = true;
         }
         document.getElementById('durationError').style.display = isDurationInvalid ? 'block' : 'none';
 
-        // 3. 16-dagers regelen mellom fravær (Kun for egenmelding egen sykdom)
+        // 3. 16-dagers regelen
         let isRuleInvalid = false;
         if (type === 'Egenmelding' && startVal) {
             const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-            // Sjekker alle typer fravær (Sykemelding ELLER Egenmelding) i arkivet
             const lastFravær = archive.find(p => p.type === 'Sykemelding' || p.type === 'Egenmelding');
             
             if (lastFravær) {
-                const lastEnd = new Date(lastFravær.end);
-                const currentStart = new Date(startVal);
-                const diffDays = (currentStart - lastEnd) / (1000 * 60 * 60 * 24);
-                
+                const diffDays = (new Date(startVal) - new Date(lastFravær.end)) / (1000 * 60 * 60 * 24);
                 if (diffDays >= 0 && diffDays < 16) isRuleInvalid = true;
             }
         }
         document.getElementById('ruleError').style.display = isRuleInvalid ? 'block' : 'none';
 
-        // Sperr arkivering
         document.getElementById('archiveBtn').disabled = isDateInvalid || isDurationInvalid || isRuleInvalid;
 
         const timerUke = (stilling / 100) * ((100 - sykemelding) / 100) * 37.5;
@@ -234,14 +228,14 @@
         twelveMonthsAgo.setFullYear(now.getFullYear() - 1);
         
         const egenmeldinger = archive.filter(p => p.type === 'Egenmelding' && new Date(p.start) > twelveMonthsAgo);
-        const sykt barn dager = archive
+        const syktBarnDager = archive
             .filter(p => p.type === 'Sykt barn' && new Date(p.start).getFullYear() === now.getFullYear())
-            .reduce((total, p) => total + ((new Date(p.end) - new Date(p.start)) / 86400000 + 1), 0);
+            .reduce((total, p) => total + (Math.ceil((new Date(p.end) - new Date(p.start)) / 86400000) + 1), 0);
 
         const warningBox = document.getElementById('trendWarning');
         let warnings = [];
         if (egenmeldinger.length >= 4) warnings.push(`<strong>OBS:</strong> 4 egenmeldinger brukt siste 12 mnd.`);
-        if (sykt barn dager >= 10) warnings.push(`<strong>OBS:</strong> ${sykt barn dager}/10 dager sykt barn brukt i år.`);
+        if (syktBarnDager >= 10) warnings.push(`<strong>OBS:</strong> ${syktBarnDager}/10 dager sykt barn brukt i år.`);
 
         warningBox.style.display = (warnings.length > 0) ? 'block' : 'none';
         warningBox.innerHTML = warnings.join('<br>');
@@ -272,12 +266,12 @@
     function renderArchive() {
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         document.getElementById('archiveList').innerHTML = archive.map(item => {
-            const displayTitle = item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type;
+            const title = item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type;
             return `
                 <div class="archive-item">
-                    <div style="font-weight:bold; color:var(--primary);">${displayTitle}</div>
+                    <div style="font-weight:bold; color:var(--primary);">${title}</div>
                     <div style="font-size:0.75rem;">${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</div>
-                    <div style="font-size:0.7rem; color:#666;">Stillingsgrad: ${item.stilling}% | ${item.timeInfo}</div>
+                    <div style="font-size:0.7rem; color:#666;">${item.timeInfo}</div>
                     <button class="btn-delete-item" onclick="deleteItem(${item.id})">&times;</button>
                 </div>
             `;
@@ -295,36 +289,40 @@
     }
 
     function exportToPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-        const name = document.getElementById('userName').value || "Ikke oppgitt";
-        const store = document.getElementById('userStore').value || "Ikke oppgitt";
+        try {
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+            const name = document.getElementById('userName').value || "Ikke oppgitt";
+            const store = document.getElementById('userStore').value || "Ikke oppgitt";
 
-        doc.setFontSize(22);
-        doc.setTextColor(24, 150, 30);
-        doc.text("FRAVÆRSRAPPORT", 105, 20, { align: "center" });
-        
-        doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Ansatt: ${name}`, 20, 35);
-        doc.text(`Butikk: ${store}`, 20, 40);
+            doc.setFontSize(22);
+            doc.setTextColor(24, 150, 30);
+            doc.text("FRAVÆRSRAPPORT", 105, 20, { align: "center" });
+            
+            doc.setFontSize(10);
+            doc.setTextColor(0, 0, 0);
+            doc.text(`Ansatt: ${name}`, 20, 35);
+            doc.text(`Butikk: ${store}`, 20, 40);
 
-        const tableRows = archive.map(item => [
-            item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type,
-            `${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}`,
-            item.stilling + "%",
-            item.timeInfo.replace('(', '').replace(')', '').replace(' å jobbe pr. uke', '')
-        ]);
+            const tableRows = archive.map(item => [
+                item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type,
+                `${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}`,
+                item.stilling + "%",
+                item.timeInfo.replace('(', '').split(' å')[0]
+            ]);
 
-        doc.autoTable({
-            startY: 50,
-            head: [['Type', 'Periode', 'Stillingsstr.', 'Arbeidstid']],
-            body: tableRows,
-            headStyles: { fillColor: [24, 150, 30] }
-        });
+            doc.autoTable({
+                startY: 50,
+                head: [['Type', 'Periode', 'Stilling', 'Arbeidstid']],
+                body: tableRows,
+                headStyles: { fillColor: [24, 150, 30] }
+            });
 
-        doc.save(`Fravær_${name.replace(/\s+/g, '_')}.pdf`);
+            doc.save(`Fravær_${name.replace(/\s+/g, '_')}.pdf`);
+        } catch (e) {
+            alert("Kunne ikke generere PDF. Sjekk at du er påkoblet internett.");
+        }
     }
 </script>
 </body>
