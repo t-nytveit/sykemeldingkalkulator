@@ -35,9 +35,9 @@
             display: flex; flex-direction: column;
         }
 
-        .logo-container { text-align: center; margin-bottom: 20px; }
-        .logo-container img { max-width: 150px; height: auto; }
-        h2 { color: #333; text-align: center; margin-top: 0; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
+        .logo-container { text-align: center; margin-bottom: 15px; }
+        .logo-container img { max-width: 140px; height: auto; }
+        h2 { color: #333; text-align: center; margin-top: 0; font-size: 1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
         .trend-alert {
             background-color: #fff3cd; border-left: 5px solid var(--warning);
@@ -46,19 +46,18 @@
         }
 
         .section-title {
-            font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;
-            margin: 15px 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 3px;
+            font-size: 0.7rem; color: var(--text-muted); text-transform: uppercase;
+            margin: 12px 0 6px 0; border-bottom: 1px solid #eee; padding-bottom: 3px;
         }
 
-        .input-group { margin-bottom: 10px; }
-        label { display: block; margin-bottom: 3px; font-weight: 600; color: #444; font-size: 0.8rem; }
+        .input-group { margin-bottom: 8px; }
+        label { display: block; margin-bottom: 2px; font-weight: 600; color: #444; font-size: 0.75rem; }
         input, select {
             width: 100%; padding: 10px; border: 1.5px solid #dee2e6; border-radius: 8px;
             font-size: 15px; box-sizing: border-box; background-color: #fcfcfc;
         }
 
-        /* Ukesoversikt Sirkler */
-        .week-viz { display: flex; justify-content: space-between; margin: 15px 0; }
+        .week-viz { display: flex; justify-content: space-between; margin: 10px 0; }
         .day-circle {
             width: 38px; height: 38px; border-radius: 50%; border: 2px solid #ddd;
             display: flex; align-items: center; justify-content: center;
@@ -70,27 +69,29 @@
         .result-box {
             background: #f1f9f1; padding: 15px; border-radius: 12px; text-align: center; margin-top: 5px; border: 1px solid #d4ecd5;
         }
-        .result-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
-        .error-msg { color: var(--danger); font-size: 0.8rem; margin-top: 8px; font-weight: bold; display: none; line-height: 1.4; padding: 8px; background: #fff1f1; border-radius: 6px; }
+        .result-value { font-size: 1.5rem; font-weight: 800; color: var(--primary); }
+        .info-text { font-size: 0.8rem; color: #555; background: var(--light-grey); padding: 10px; border-radius: 8px; margin-top: 10px; line-height: 1.4; border-left: 4px solid var(--primary); }
+        .error-msg { color: var(--danger); font-size: 0.8rem; margin-top: 8px; font-weight: bold; display: none; padding: 8px; background: #fff1f1; border-radius: 6px; border-left: 4px solid var(--danger); }
 
         .btn-main {
             background-color: var(--primary); color: white; border: none; padding: 14px;
-            border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.95rem;
+            border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.9rem;
         }
         .btn-main:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
         
         .btn-pdf {
             background-color: #333; color: white; border: none; padding: 10px;
-            border-radius: 8px; cursor: pointer; margin-top: 10px; font-size: 0.85rem; font-weight: 600;
+            border-radius: 8px; cursor: pointer; margin-top: 8px; font-size: 0.8rem; font-weight: 600;
         }
 
         .archive-item {
             background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px;
-            margin-bottom: 8px; font-size: 0.8rem; position: relative;
+            margin-bottom: 8px; font-size: 0.8rem; position: relative; cursor: pointer; transition: 0.2s;
         }
+        .archive-item:hover { border-color: var(--primary); background: #f9fdf9; }
         .btn-delete-item {
-            position: absolute; right: 10px; top: 12px; background: none; border: none;
-            color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 5px;
+            position: absolute; right: 8px; top: 10px; background: none; border: none;
+            color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 5px; z-index: 2;
         }
 
         .copyright { margin-top: 25px; text-align: center; font-size: 0.7rem; color: var(--text-muted); }
@@ -108,18 +109,11 @@
     <h2>Personalverktøy</h2>
     
     <div class="section-title">Brukerinformasjon</div>
-    <div class="input-group">
-        <label>Navn ansatt</label>
-        <input type="text" id="userName" placeholder="Fullt navn" oninput="saveUserData()">
-    </div>
-    <div class="input-group">
-        <label>Butikk / Avdeling</label>
-        <input type="text" id="userStore" placeholder="KIWI XXXX" oninput="saveUserData()">
-    </div>
+    <div class="input-group"><label>Navn ansatt</label><input type="text" id="userName" oninput="saveUserData()"></div>
+    <div class="input-group"><label>Butikk / Avdeling</label><input type="text" id="userStore" oninput="saveUserData()"></div>
 
-    <div class="section-title">Fraværsdetaljer</div>
+    <div class="section-title">Fravær</div>
     <div class="input-group">
-        <label>Type fravær</label>
         <select id="fraværType" onchange="calculate()">
             <option value="Sykemelding">Sykemelding (Legeerklært)</option>
             <option value="Egenmelding">Egenmelding (Egen sykdom)</option>
@@ -127,24 +121,20 @@
         </select>
     </div>
 
-    <div class="input-group" id="stillingGroup">
-        <label>Stillingsstørrelse (%)</label>
-        <input type="number" id="stilling" value="100" oninput="calculate()">
-    </div>
-    
-    <div id="gradInputGroup" class="input-group">
-        <label>Sykemeldingsprosent (%)</label>
-        <input type="number" id="sykemelding" value="40" oninput="calculate()">
+    <div style="display: flex; gap: 10px;">
+        <div class="input-group" style="flex:1;"><label>Stilling %</label><input type="number" id="stilling" value="100" oninput="calculate()"></div>
+        <div id="gradInputGroup" class="input-group" style="flex:1;"><label>Syke %</label><input type="number" id="sykemelding" value="40" oninput="calculate()"></div>
     </div>
 
-    <div class="input-group"><label>Startdato</label><input type="date" id="startDate" oninput="calculate()"></div>
-    <div class="input-group"><label>Sluttdato</label><input type="date" id="endDate" oninput="calculate()"></div>
+    <div style="display: flex; gap: 10px;">
+        <div class="input-group" style="flex:1;"><label>Start</label><input type="date" id="startDate" oninput="calculate()"></div>
+        <div class="input-group" style="flex:1;"><label>Slutt</label><input type="date" id="endDate" oninput="calculate()"></div>
+    </div>
     
-    <div id="dateError" class="error-msg">⚠️ Sluttdato kan ikke være før startdato!</div>
-    <div id="ruleError" class="error-msg">⚠️ Kan ikke bruke egenmelding før det er gått 16 dager etter forrige fravær.</div>
-    <div id="durationError" class="error-msg">⚠️ Egenmelding (egen sykdom) kan maks vare i 3 dager.</div>
+    <div id="dateError" class="error-msg">⚠️ Sluttdato er før startdato!</div>
+    <div id="ruleError" class="error-msg">⚠️ 16-dagers karantene for egenmelding.</div>
+    <div id="durationError" class="error-msg">⚠️ Maks 3 dager på egenmelding.</div>
 
-    <div class="section-title">Arbeidsevne pr. uke</div>
     <div class="week-viz">
         <div class="day-circle"><div class="day-fill" id="fill-0"></div>M</div>
         <div class="day-circle"><div class="day-fill" id="fill-1"></div>T</div>
@@ -157,14 +147,17 @@
 
     <div class="result-box">
         <div id="result" class="result-value">0,00</div>
-        <div id="resultTimeFormat" style="font-size: 0.85rem; color: #444;">(0t 0m å jobbe pr. uke)</div>
+        <div id="resultTimeFormat" style="font-size: 0.8rem; color: #444;">(0t 0m pr. uke)</div>
+        <div id="dayCount" style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;"></div>
     </div>
 
+    <div id="agPeriodInfo" class="info-text" style="display:none;"></div>
+
     <button id="archiveBtn" class="btn-main" onclick="archivePeriod()">Arkiver periode</button>
-    <button class="btn-pdf" onclick="exportToPDF()">Generer PDF for personalmappe</button>
+    <button class="btn-pdf" onclick="exportToPDF()">Generer PDF-rapport</button>
 
     <div class="archive-section">
-        <div class="section-title">Arkiv</div>
+        <div class="section-title">Arkiv (Trykk for å se detaljer)</div>
         <div id="archiveList"></div>
     </div>
 
@@ -175,16 +168,11 @@
     document.getElementById('year').textContent = new Date().getFullYear();
 
     window.onload = function() {
-        const fields = ['stilling', 'sykemelding', 'startDate', 'endDate', 'fraværType', 'userName', 'userStore'];
-        fields.forEach(field => {
-            const saved = localStorage.getItem('haga_' + field);
-            if (saved && document.getElementById(field)) {
-                document.getElementById(field).value = saved;
-            }
+        ['stilling', 'sykemelding', 'startDate', 'endDate', 'fraværType', 'userName', 'userStore'].forEach(f => {
+            const v = localStorage.getItem('haga_' + f);
+            if (v) document.getElementById(f).value = v;
         });
-        checkTrends();
-        renderArchive();
-        calculate();
+        checkTrends(); renderArchive(); calculate();
     };
 
     function saveUserData() {
@@ -201,151 +189,124 @@
         
         document.getElementById('gradInputGroup').style.display = (type === 'Sykemelding') ? 'block' : 'none';
         
-        const start = new Date(startVal);
-        const end = new Date(endVal);
-
-        // 1. Dato-validering
+        const start = new Date(startVal); const end = new Date(endVal);
         const isDateInvalid = startVal && endVal && (end < start);
         document.getElementById('dateError').style.display = isDateInvalid ? 'block' : 'none';
 
-        // 2. Maks 3 dager
+        // Sykedager teller
+        if(startVal && endVal && !isDateInvalid) {
+            const d = Math.ceil((end - start) / 86400000) + 1;
+            document.getElementById('dayCount').innerText = `Perioden utgjør ${d} dag(er)`;
+        } else { document.getElementById('dayCount').innerText = ""; }
+
+        // Egenmelding regler
         let isDurationInvalid = false;
         if (type === 'Egenmelding' && startVal && endVal) {
-            const diffDays = Math.ceil((end - start) / (1000 * 60 * 60 * 24)) + 1;
-            if (diffDays > 3) isDurationInvalid = true;
+            if ((Math.ceil((end - start) / 86400000) + 1) > 3) isDurationInvalid = true;
         }
         document.getElementById('durationError').style.display = isDurationInvalid ? 'block' : 'none';
 
-        // 3. 16-dagers regelen
         let isRuleInvalid = false;
         if (type === 'Egenmelding' && startVal) {
             const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-            const lastFravær = archive.find(p => p.type === 'Sykemelding' || p.type === 'Egenmelding');
-            if (lastFravær) {
-                const diffDays = (new Date(startVal) - new Date(lastFravær.end)) / (1000 * 60 * 60 * 24);
-                if (diffDays >= 0 && diffDays < 16) isRuleInvalid = true;
+            const last = archive.find(p => p.type !== 'Sykt barn');
+            if (last) {
+                const diff = (new Date(startVal) - new Date(last.end)) / 86400000;
+                if (diff >= 0 && diff < 16) isRuleInvalid = true;
             }
         }
         document.getElementById('ruleError').style.display = isRuleInvalid ? 'block' : 'none';
-
         document.getElementById('archiveBtn').disabled = isDateInvalid || isDurationInvalid || isRuleInvalid;
 
-        // BEREGNING OG SIRKLER
-        const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
-        const timerUke = restArbeidsevneFaktor * 37.5;
-        
-        document.getElementById('result').innerText = timerUke.toLocaleString('no-NO', { minimumFractionDigits: 2 });
-        const h = Math.floor(timerUke);
-        const m = Math.round((timerUke - h) * 60);
-        document.getElementById('resultTimeFormat').innerText = `(${h}t ${m}m å jobbe pr. uke)`;
+        // AG Periode Info
+        const agBox = document.getElementById('agPeriodInfo');
+        if(type === 'Sykemelding' && startVal && !isDateInvalid) {
+            let agEnd = new Date(start); agEnd.setDate(start.getDate() + 15);
+            agBox.style.display = 'block';
+            agBox.innerHTML = `<strong>Arbeidsgiverperioden:</strong> Avsluttes ${agEnd.toLocaleDateString('nb-NO')}. Deretter tar NAV over.`;
+        } else { agBox.style.display = 'none'; }
 
-        // Oppdater sirkler
-        const fillHeight = restArbeidsevneFaktor * 100;
-        for(let i=0; i<7; i++) {
-            document.getElementById(`fill-${i}`).style.height = fillHeight + '%';
-        }
+        // Resultat og sirkler
+        const faktor = (stilling / 100) * ((100 - sykemelding) / 100);
+        const timer = faktor * 37.5;
+        document.getElementById('result').innerText = timer.toLocaleString('no-NO', { minimumFractionDigits: 2 });
+        const h = Math.floor(timer); const m = Math.round((timer - h) * 60);
+        document.getElementById('resultTimeFormat').innerText = `(${h}t ${m}m å jobbe pr. uke)`;
+        for(let i=0; i<7; i++) { document.getElementById(`fill-${i}`).style.height = (faktor * 100) + '%'; }
 
         localStorage.setItem('haga_fraværType', type);
         localStorage.setItem('haga_startDate', startVal);
         localStorage.setItem('haga_endDate', endVal);
     }
 
-    function checkTrends() {
-        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-        const now = new Date();
-        const twelveMonthsAgo = new Date();
-        twelveMonthsAgo.setFullYear(now.getFullYear() - 1);
-        
-        const egenmeldinger = archive.filter(p => p.type === 'Egenmelding' && new Date(p.start) > twelveMonthsAgo);
-        const syktBarnDager = archive
-            .filter(p => p.type === 'Sykt barn' && new Date(p.start).getFullYear() === now.getFullYear())
-            .reduce((total, p) => total + (Math.ceil((new Date(p.end) - new Date(p.start)) / 86400000) + 1), 0);
-
-        const warningBox = document.getElementById('trendWarning');
-        let warnings = [];
-        if (egenmeldinger.length >= 4) warnings.push(`<strong>OBS:</strong> 4 egenmeldinger brukt siste 12 mnd.`);
-        if (syktBarnDager >= 10) warnings.push(`<strong>OBS:</strong> ${syktBarnDager}/10 dager sykt barn brukt i år.`);
-
-        warningBox.style.display = (warnings.length > 0) ? 'block' : 'none';
-        warningBox.innerHTML = warnings.join('<br>');
-    }
-
     function archivePeriod() {
-        const start = document.getElementById('startDate').value;
-        const end = document.getElementById('endDate').value;
-        if (!start || !end) return alert("Fyll ut datoer!");
-
         const entry = {
-            id: Date.now(),
-            type: document.getElementById('fraværType').value,
-            start: start,
-            end: end,
-            grad: document.getElementById('sykemelding').value,
-            stilling: document.getElementById('stilling').value,
+            id: Date.now(), type: document.getElementById('fraværType').value,
+            start: document.getElementById('startDate').value, end: document.getElementById('endDate').value,
+            grad: document.getElementById('sykemelding').value, stilling: document.getElementById('stilling').value,
             timeInfo: document.getElementById('resultTimeFormat').innerText
         };
-
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive.unshift(entry);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
-        checkTrends();
-        renderArchive();
+        checkTrends(); renderArchive();
+    }
+
+    function loadFromArchive(id) {
+        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        const p = archive.find(x => x.id === id);
+        if(p) {
+            document.getElementById('fraværType').value = p.type;
+            document.getElementById('startDate').value = p.start;
+            document.getElementById('endDate').value = p.end;
+            document.getElementById('sykemelding').value = p.grad;
+            document.getElementById('stilling').value = p.stilling;
+            calculate(); window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
     }
 
     function renderArchive() {
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-        document.getElementById('archiveList').innerHTML = archive.map(item => {
-            const title = item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type;
-            return `
-                <div class="archive-item">
-                    <div style="font-weight:bold; color:var(--primary);">${title}</div>
-                    <div style="font-size:0.75rem;">${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</div>
-                    <div style="font-size:0.7rem; color:#666;">${item.timeInfo}</div>
-                    <button class="btn-delete-item" onclick="deleteItem(${item.id})">&times;</button>
-                </div>
-            `;
-        }).join('');
+        document.getElementById('archiveList').innerHTML = archive.map(item => `
+            <div class="archive-item" onclick="loadFromArchive(${item.id})">
+                <div style="font-weight:bold; color:var(--primary);">${item.type === 'Sykemelding' ? 'Sykemelding '+item.grad+'%' : item.type}</div>
+                <div style="font-size:0.75rem;">${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</div>
+                <button class="btn-delete-item" onclick="event.stopPropagation(); deleteItem(${item.id})">&times;</button>
+            </div>
+        `).join('');
+    }
+
+    function checkTrends() {
+        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        const now = new Date(); const yr = now.getFullYear();
+        const twelve = new Date(); twelve.setFullYear(now.getFullYear() - 1);
+        const eg = archive.filter(p => p.type === 'Egenmelding' && new Date(p.start) > twelve).length;
+        const sb = archive.filter(p => p.type === 'Sykt barn' && new Date(p.start).getFullYear() === yr)
+            .reduce((t, p) => t + (Math.ceil((new Date(p.end) - new Date(p.start)) / 86400000) + 1), 0);
+        const warn = document.getElementById('trendWarning');
+        let txt = [];
+        if (eg >= 4) txt.push(`<strong>OBS:</strong> 4 egenmeldinger siste 12 mnd.`);
+        if (sb >= 10) txt.push(`<strong>OBS:</strong> ${sb}/10 dager sykt barn i år.`);
+        warn.style.display = txt.length > 0 ? 'block' : 'none';
+        warn.innerHTML = txt.join('<br>');
     }
 
     function deleteItem(id) {
-        if(!confirm("Slette perioden?")) return;
-        let archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-        archive = archive.filter(p => p.id !== id);
-        localStorage.setItem('haga_archive', JSON.stringify(archive));
-        checkTrends();
-        renderArchive();
-        calculate();
+        if(!confirm("Slette?")) return;
+        let a = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        localStorage.setItem('haga_archive', JSON.stringify(a.filter(x => x.id !== id)));
+        checkTrends(); renderArchive(); calculate();
     }
 
     function exportToPDF() {
-        const { jsPDF } = window.jspdf;
-        const doc = new jsPDF();
-        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-        const name = document.getElementById('userName').value || "Ikke oppgitt";
-        const store = document.getElementById('userStore').value || "Ikke oppgitt";
-
-        doc.setFontSize(22);
-        doc.setTextColor(24, 150, 30);
-        doc.text("FRAVÆRSRAPPORT", 105, 20, { align: "center" });
-        doc.setFontSize(10);
-        doc.setTextColor(0, 0, 0);
-        doc.text(`Ansatt: ${name}`, 20, 35);
-        doc.text(`Butikk: ${store}`, 20, 40);
-
-        const tableRows = archive.map(item => [
-            item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type,
-            `${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}`,
-            item.stilling + "%",
-            item.timeInfo.replace('(', '').split(' å')[0]
-        ]);
-
-        doc.autoTable({
-            startY: 50,
-            head: [['Type', 'Periode', 'Stilling', 'Arbeidstid']],
-            body: tableRows,
-            headStyles: { fillColor: [24, 150, 30] }
-        });
-        doc.save(`Fravær_${name.replace(/\s+/g, '_')}.pdf`);
+        const { jsPDF } = window.jspdf; const doc = new jsPDF();
+        const a = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        doc.setTextColor(24, 150, 30); doc.text("FRAVÆRSRAPPORT", 105, 20, { align: "center" });
+        doc.setTextColor(0, 0, 0); doc.setFontSize(10);
+        doc.text(`Ansatt: ${document.getElementById('userName').value}`, 20, 35);
+        const rows = a.map(i => [i.type, `${new Date(i.start).toLocaleDateString('nb-NO')} - ${new Date(i.end).toLocaleDateString('nb-NO')}`, i.stilling + "%", i.timeInfo.split(' å')[0]]);
+        doc.autoTable({ startY: 45, head: [['Type', 'Periode', 'Stilling', 'Jobbe']], body: rows, headStyles: { fillColor: [24, 150, 30] } });
+        doc.save("fraværsrapport.pdf");
     }
 </script>
 </body>
