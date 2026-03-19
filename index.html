@@ -193,22 +193,21 @@
         const isDateInvalid = startVal && endVal && (end < start);
         document.getElementById('dateError').style.display = isDateInvalid ? 'block' : 'none';
 
-        // Sykedager teller
         if(startVal && endVal && !isDateInvalid) {
             const d = Math.ceil((end - start) / 86400000) + 1;
             document.getElementById('dayCount').innerText = `Perioden utgjør ${d} dag(er)`;
         } else { document.getElementById('dayCount').innerText = ""; }
 
-        // Egenmelding regler
         let isDurationInvalid = false;
         if (type === 'Egenmelding' && startVal && endVal) {
             if ((Math.ceil((end - start) / 86400000) + 1) > 3) isDurationInvalid = true;
         }
         document.getElementById('durationError').style.display = isDurationInvalid ? 'block' : 'none';
 
+        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+
         let isRuleInvalid = false;
         if (type === 'Egenmelding' && startVal) {
-            const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
             const last = archive.find(p => p.type !== 'Sykt barn');
             if (last) {
                 const diff = (new Date(startVal) - new Date(last.end)) / 86400000;
@@ -218,15 +217,38 @@
         document.getElementById('ruleError').style.display = isRuleInvalid ? 'block' : 'none';
         document.getElementById('archiveBtn').disabled = isDateInvalid || isDurationInvalid || isRuleInvalid;
 
-        // AG Periode Info
+        // BEREGNING AV ARBEIDSGIVERPERIODE (HENSTYNSTOK ARKIV)
         const agBox = document.getElementById('agPeriodInfo');
         if(type === 'Sykemelding' && startVal && !isDateInvalid) {
-            let agEnd = new Date(start); agEnd.setDate(start.getDate() + 15);
+            // Finn historisk start (første dag i sammenhengende fravær)
+            let currentChainStart = new Date(start);
+            let checkNext = true;
+            let tempArchive = [...archive].sort((a,b) => new Date(b.start) - new Date(a.start));
+
+            while(checkNext) {
+                let previous = tempArchive.find(p => {
+                    let pEnd = new Date(p.end);
+                    let gap = (currentChainStart - pEnd) / 86400000;
+                    return p.type !== 'Sykt barn' && gap >= 0 && gap < 16;
+                });
+                if(previous) {
+                    currentChainStart = new Date(previous.start);
+                } else {
+                    checkNext = false;
+                }
+            }
+
+            let agEnd = new Date(currentChainStart); 
+            agEnd.setDate(currentChainStart.getDate() + 15);
+            
             agBox.style.display = 'block';
-            agBox.innerHTML = `<strong>Arbeidsgiverperioden:</strong> Avsluttes ${agEnd.toLocaleDateString('nb-NO')}. Deretter tar NAV over.`;
+            if (currentChainStart.getTime() !== start.getTime()) {
+                agBox.innerHTML = `<strong>Arbeidsgiverperioden:</strong><br>Startet historisk: ${currentChainStart.toLocaleDateString('nb-NO')}<br>Avsluttes: ${agEnd.toLocaleDateString('nb-NO')}.`;
+            } else {
+                agBox.innerHTML = `<strong>Arbeidsgiverperioden:</strong> Avsluttes ${agEnd.toLocaleDateString('nb-NO')}. Deretter tar NAV over.`;
+            }
         } else { agBox.style.display = 'none'; }
 
-        // Resultat og sirkler
         const faktor = (stilling / 100) * ((100 - sykemelding) / 100);
         const timer = faktor * 37.5;
         document.getElementById('result').innerText = timer.toLocaleString('no-NO', { minimumFractionDigits: 2 });
@@ -249,7 +271,7 @@
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive.unshift(entry);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
-        checkTrends(); renderArchive();
+        checkTrends(); renderArchive(); calculate();
     }
 
     function loadFromArchive(id) {
