@@ -24,7 +24,7 @@
             background-color: var(--bg);
             display: flex;
             justify-content: center;
-            align-items: flex-start; /* Endret fra center for å gi plass til arkiv */
+            align-items: flex-start;
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -67,45 +67,16 @@
             background-color: #fcfcfc;
         }
 
-        /* Uke-visualisering */
-        .week-viz {
-            display: flex;
-            justify-content: space-between;
-            margin: 15px 0;
-        }
+        .week-viz { display: flex; justify-content: space-between; margin: 15px 0; }
         .day-circle {
-            width: 35px;
-            height: 35px;
-            border-radius: 50%;
-            border: 2px solid #ddd;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            font-size: 0.7rem;
-            font-weight: bold;
-            color: #999;
-            position: relative;
-            overflow: hidden;
+            width: 35px; height: 35px; border-radius: 50%; border: 2px solid #ddd;
+            display: flex; flex-direction: column; align-items: center; justify-content: center;
+            font-size: 0.7rem; font-weight: bold; color: #999; position: relative; overflow: hidden;
         }
-        .day-fill {
-            position: absolute;
-            bottom: 0;
-            left: 0;
-            width: 100%;
-            background-color: var(--primary);
-            opacity: 0.3;
-            transition: height 0.5s ease;
-        }
+        .day-fill { position: absolute; bottom: 0; left: 0; width: 100%; background-color: var(--primary); opacity: 0.3; transition: height 0.5s ease; }
 
-        /* Resultat & Progress */
         .result-box {
-            background: #f1f9f1;
-            padding: 15px;
-            border-radius: 12px;
-            text-align: center;
-            margin-top: 20px;
-            border: 1px solid #d4ecd5;
+            background: #f1f9f1; padding: 15px; border-radius: 12px; text-align: center; margin-top: 20px; border: 1px solid #d4ecd5;
         }
         .result-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
         .result-detail { font-size: 0.85rem; color: #444; margin-bottom: 10px; }
@@ -114,31 +85,19 @@
         .progress-bar { height: 100%; background-color: var(--primary); width: 0%; transition: width 0.5s ease; }
 
         .btn-archive {
-            background-color: var(--primary);
-            color: white;
-            border: none;
-            padding: 12px;
-            border-radius: 10px;
-            font-weight: bold;
-            cursor: pointer;
-            margin-top: 15px;
-            font-size: 0.9rem;
+            background-color: var(--primary); color: white; border: none; padding: 12px;
+            border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 0.9rem;
         }
 
-        /* Arkiv-liste */
         .archive-section { margin-top: 30px; }
         .archive-item {
-            background: #fff;
-            border: 1px solid #eee;
-            padding: 10px;
-            border-radius: 8px;
-            margin-bottom: 8px;
-            font-size: 0.8rem;
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
+            background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px;
+            font-size: 0.8rem; display: flex; justify-content: space-between; align-items: flex-start;
         }
-        .btn-delete { color: #dc3545; border: none; background: none; cursor: pointer; font-size: 1.1rem; }
+        .archive-content { flex-grow: 1; line-height: 1.4; }
+        .btn-delete { color: #dc3545; border: none; background: none; cursor: pointer; font-size: 1.2rem; margin-left: 10px; }
+
+        .info-text { font-size: 0.8rem; color: #555; background: var(--light-grey); padding: 12px; border-radius: 8px; margin-top: 15px; line-height: 1.5; border-left: 4px solid var(--primary); }
 
         .copyright { margin-top: 25px; text-align: center; font-size: 0.7rem; color: var(--text-muted); }
     </style>
@@ -192,7 +151,7 @@
 
     <button class="btn-archive" onclick="archivePeriod()">Arkiver denne perioden</button>
 
-    <div id="statusInfo" class="info-text" style="display:none; margin-top:15px;"></div>
+    <div id="statusInfo" class="info-text" style="display:none;"></div>
 
     <div class="archive-section">
         <div class="section-title">Arkiverte perioder</div>
@@ -224,14 +183,12 @@
         const startVal = document.getElementById('startDate').value;
         const endVal = document.getElementById('endDate').value;
 
-        // Lagre
         localStorage.setItem('haga_stilling', stilling);
         localStorage.setItem('haga_sykemelding', sykemelding);
         localStorage.setItem('haga_fullUke', fullUke);
         localStorage.setItem('haga_startDate', startVal);
         localStorage.setItem('haga_endDate', endVal);
 
-        // Beregn timer
         const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
         const timerUke = restArbeidsevneFaktor * fullUke;
         
@@ -240,18 +197,41 @@
         const m = Math.round((timerUke - h) * 60);
         document.getElementById('resultTimeFormat').innerText = `(${h} timer og ${m} minutter)`;
 
-        // Oppdater ukes-viz (Sirkler)
         const restProsent = restArbeidsevneFaktor * 100;
         for(let i=0; i<7; i++) {
             document.getElementById(`fill-${i}`).style.height = restProsent + '%';
         }
 
-        // Progress & Status
         const statusBox = document.getElementById('statusInfo');
         if (startVal && endVal) {
-            const start = new Date(startVal); const end = new Date(endVal); const today = new Date();
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            const today = new Date();
             today.setHours(0,0,0,0);
-            let agEnd = new Date(start); agEnd.setDate(start.getDate() + 15);
+
+            // LOGIKK FOR ARBEIDSGIVERPERIODE (SAMMENHENG)
+            const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+            let effectiveStartDate = start;
+
+            // Finn eldste sammenhengende startdato
+            let foundLink = true;
+            let currentCheckDate = start;
+            while(foundLink) {
+                const prevPeriod = archive.find(p => {
+                    const pEnd = new Date(p.end);
+                    const diffDays = (currentCheckDate - pEnd) / (1000 * 60 * 60 * 24);
+                    return diffDays >= 0 && diffDays < 16;
+                });
+                if(prevPeriod) {
+                    effectiveStartDate = new Date(prevPeriod.start);
+                    currentCheckDate = effectiveStartDate;
+                } else {
+                    foundLink = false;
+                }
+            }
+
+            let agEnd = new Date(effectiveStartDate);
+            agEnd.setDate(effectiveStartDate.getDate() + 15);
             
             const total = end - start;
             const current = today - start;
@@ -259,8 +239,16 @@
             
             document.getElementById('progressBar').style.width = percent + '%';
             document.getElementById('progressLabel').innerText = percent + '% fullført';
+            
             statusBox.style.display = 'block';
-            statusBox.innerHTML = today > agEnd ? "✅ NAV dekker nå sykepenger." : `⏳ Arbeidsgiver betaler til ${agEnd.toLocaleDateString('nb-NO')}.`;
+            let msg = today > agEnd 
+                ? "✅ Arbeidsgiverperioden er over (basert på sammenhengende fravær). NAV dekker nå sykepenger." 
+                : `⏳ Arbeidsgiver betaler til ${agEnd.toLocaleDateString('nb-NO')}.`;
+            
+            if (effectiveStartDate < start) {
+                msg += `<br><small><i>(Basert på første sykedato i dette forløpet: ${effectiveStartDate.toLocaleDateString('nb-NO')})</i></small>`;
+            }
+            statusBox.innerHTML = msg;
         } else { statusBox.style.display = 'none'; }
     }
 
@@ -268,13 +256,30 @@
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
         const grad = document.getElementById('sykemelding').value;
+        const fullUke = parseFloat(document.getElementById('fullUke').value) || 37.5;
+        const stilling = parseFloat(document.getElementById('stilling').value) || 100;
+
         if(!start || !end) return alert("Mangler datoer");
 
-        const entry = { id: Date.now(), start, end, grad };
+        // Beregn timer for arkivet
+        const faktor = (stilling / 100) * ((100 - grad) / 100);
+        const tUke = faktor * fullUke;
+        const h = Math.floor(tUke);
+        const m = Math.round((tUke - h) * 60);
+
+        const entry = { 
+            id: Date.now(), 
+            start, 
+            end, 
+            grad, 
+            timeInfo: `${h}t ${m}m` 
+        };
+
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive.unshift(entry);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
         renderArchive();
+        calculate(); // Oppdater status-tekst med en gang
     }
 
     function renderArchive() {
@@ -282,17 +287,23 @@
         const list = document.getElementById('archiveList');
         list.innerHTML = archive.map(item => `
             <div class="archive-item">
-                <span><strong>${item.grad}%</strong>: ${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</span>
+                <div class="archive-content">
+                    <strong>${item.grad}% Sykemeldt</strong><br>
+                    📅 ${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}<br>
+                    🕒 Skal jobbe: ${item.timeInfo} pr. uke
+                </div>
                 <button class="btn-delete" onclick="deleteArchive(${item.id})">&times;</button>
             </div>
         `).join('');
     }
 
     function deleteArchive(id) {
+        if(!confirm("Vil du slette denne perioden?")) return;
         let archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive = archive.filter(item => item.id !== id);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
         renderArchive();
+        calculate();
     }
 </script>
 </body>
