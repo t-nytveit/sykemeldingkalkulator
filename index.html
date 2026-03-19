@@ -17,6 +17,7 @@
             --bg: #f4f7f6;
             --card: #ffffff;
             --text-muted: #6c757d;
+            --light-grey: #f8f9fa;
         }
         
         body {
@@ -33,22 +34,22 @@
 
         .container {
             background: var(--card);
-            padding: 30px;
+            padding: 25px;
             border-radius: 20px;
             box-shadow: 0 10px 25px rgba(0,0,0,0.08);
             width: 100%;
-            max-width: 400px;
+            max-width: 420px;
             display: flex;
             flex-direction: column;
         }
 
         .logo-container {
             text-align: center;
-            margin-bottom: 25px;
+            margin-bottom: 20px;
         }
 
         .logo-container img {
-            max-width: 180px;
+            max-width: 150px;
             height: auto;
         }
 
@@ -56,31 +57,40 @@
             color: #333; 
             text-align: center; 
             margin-top: 0; 
-            font-size: 1.2rem; 
+            font-size: 1.1rem; 
             font-weight: 700; 
             text-transform: uppercase; 
             letter-spacing: 1px; 
         }
 
-        .input-group { margin-bottom: 15px; }
+        .section-title {
+            font-size: 0.8rem;
+            color: var(--text-muted);
+            text-transform: uppercase;
+            margin: 20px 0 10px 0;
+            border-bottom: 1px solid #eee;
+            padding-bottom: 5px;
+        }
+
+        .input-group { margin-bottom: 12px; }
 
         label { 
             display: block; 
-            margin-bottom: 6px; 
+            margin-bottom: 4px; 
             font-weight: 600; 
             color: #444; 
-            font-size: 0.9rem; 
+            font-size: 0.85rem; 
         }
 
         input {
             width: 100%;
-            padding: 14px;
+            padding: 12px;
             border: 1.5px solid #dee2e6;
             border-radius: 10px;
             font-size: 16px;
             box-sizing: border-box;
             background-color: #fcfcfc;
-            -webkit-appearance: none; /* Fjerner default styling på iPhone */
+            -webkit-appearance: none;
         }
 
         input:focus { 
@@ -89,39 +99,50 @@
             background-color: #fff; 
         }
 
+        /* Resultat-seksjon */
         .result-box {
             background: #f1f9f1;
-            padding: 20px;
+            padding: 15px;
             border-radius: 12px;
             text-align: center;
-            margin-top: 25px;
+            margin-top: 20px;
             border: 1px solid #d4ecd5;
         }
 
-        .result-label { 
-            font-size: 0.95rem; 
-            color: #444; 
-            margin-bottom: 8px; 
+        .result-label { font-size: 0.9rem; color: #444; margin-bottom: 5px; }
+        .result-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
+
+        /* Progress Bar */
+        .progress-container {
+            width: 100%;
+            background-color: #e9ecef;
+            border-radius: 10px;
+            height: 10px;
+            margin: 15px 0 5px 0;
+            overflow: hidden;
+        }
+        .progress-bar {
+            height: 100%;
+            background-color: var(--primary);
+            width: 0%;
+            transition: width 0.5s ease;
         }
 
-        .result-value { 
-            font-size: 2.2rem; 
-            font-weight: 800; 
-            color: var(--primary); 
-        }
-
-        .sub-result { 
-            font-size: 0.85rem; 
-            color: var(--text-muted); 
-            margin-top: 10px; 
+        .info-text {
+            font-size: 0.8rem;
+            color: #555;
+            background: var(--light-grey);
+            padding: 10px;
+            border-radius: 8px;
+            margin-top: 10px;
+            line-height: 1.4;
         }
 
         .copyright {
-            margin-top: 30px;
+            margin-top: 25px;
             text-align: center;
-            font-size: 0.75rem;
+            font-size: 0.7rem;
             color: var(--text-muted);
-            letter-spacing: 0.5px;
         }
     </style>
 </head>
@@ -134,6 +155,7 @@
 
     <h2>Kalkulator</h2>
     
+    <div class="section-title">Arbeidstid</div>
     <div class="input-group">
         <label>Stillingsstørrelse (%)</label>
         <input type="number" id="stilling" value="100" oninput="calculate()" inputmode="decimal">
@@ -149,13 +171,27 @@
         <input type="number" id="fullUke" value="37.5" step="0.5" oninput="calculate()" inputmode="decimal">
     </div>
 
+    <div class="section-title">Periode & Status</div>
+    <div class="input-group">
+        <label>Startdato sykemelding</label>
+        <input type="date" id="startDate" oninput="calculate()">
+    </div>
+    <div class="input-group">
+        <label>Sluttdato sykemelding</label>
+        <input type="date" id="endDate" oninput="calculate()">
+    </div>
+
     <div class="result-box">
         <div class="result-label">Timer du skal jobbe pr. uke:</div>
-        <div id="result" class="result-value">22,50</div>
-        <div class="sub-result">
-            Din restarbeidsevne: <strong><span id="restProsent">60</span>%</strong>
+        <div id="result" class="result-value">0,00</div>
+        
+        <div class="progress-container">
+            <div id="progressBar" class="progress-bar"></div>
         </div>
+        <div id="progressLabel" style="font-size: 0.75rem; font-weight: bold; color: var(--primary);">0% fullført</div>
     </div>
+
+    <div id="statusInfo" class="info-text" style="display:none;"></div>
 
     <div class="copyright">
         &copy; <span id="year"></span> Copyright Thomas Nytveit
@@ -163,32 +199,76 @@
 </div>
 
 <script>
-    // Setter automatisk riktig årstall
     document.getElementById('year').textContent = new Date().getFullYear();
 
+    // Last lagrede data fra localStorage ved oppstart
+    window.onload = function() {
+        const fields = ['stilling', 'sykemelding', 'fullUke', 'startDate', 'endDate'];
+        fields.forEach(field => {
+            const saved = localStorage.getItem('haga_' + field);
+            if (saved) document.getElementById(field).value = saved;
+        });
+        calculate();
+    };
+
     function calculate() {
+        // Hent verdier
         const stilling = parseFloat(document.getElementById('stilling').value) || 0;
         const sykemelding = parseFloat(document.getElementById('sykemelding').value) || 0;
         const fullUke = parseFloat(document.getElementById('fullUke').value) || 37.5;
+        const startVal = document.getElementById('startDate').value;
+        const endVal = document.getElementById('endDate').value;
 
-        // Regner ut rest-prosent av en 100% stilling
+        // Lagre verdier
+        localStorage.setItem('haga_stilling', stilling);
+        localStorage.setItem('haga_sykemelding', sykemelding);
+        localStorage.setItem('haga_fullUke', fullUke);
+        localStorage.setItem('haga_startDate', startVal);
+        localStorage.setItem('haga_endDate', endVal);
+
+        // 1. Regn ut timer
         const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
-        
-        // Regner ut antall timer basert på arbeidstiden for en full stilling
         const timerSkalJobbe = restArbeidsevneFaktor * fullUke;
         
-        // Viser restarbeidsevne i prosent (f.eks. 60% av 100% stilling)
-        const restVisning = restArbeidsevneFaktor * 100;
-
-        document.getElementById('restProsent').innerText = restVisning.toFixed(1).replace('.', ',');
         document.getElementById('result').innerText = timerSkalJobbe.toLocaleString('no-NO', { 
             minimumFractionDigits: 2, 
             maximumFractionDigits: 2 
         });
-    }
 
-    // Kjør beregning ved oppstart
-    calculate();
+        // 2. Dato-beregninger og Progress Bar
+        const statusBox = document.getElementById('statusInfo');
+        if (startVal && endVal) {
+            const start = new Date(startVal);
+            const end = new Date(endVal);
+            const today = new Date();
+            today.setHours(0,0,0,0);
+
+            // Arbeidsgiverperiode (16 dager)
+            let agEnd = new Date(start);
+            agEnd.setDate(start.getDate() + 15);
+
+            // Fremgang
+            const total = end - start;
+            const current = today - start;
+            let percent = 0;
+            if (total > 0) {
+                percent = Math.min(100, Math.max(0, Math.round((current / total) * 100)));
+            }
+            
+            document.getElementById('progressBar').style.width = percent + '%';
+            document.getElementById('progressLabel').innerText = percent + '% fullført';
+
+            // Statusmelding
+            statusBox.style.display = 'block';
+            let agStatus = today > agEnd 
+                ? "✅ Arbeidsgiverperioden er over. NAV dekker nå sykepenger." 
+                : `⏳ Arbeidsgiver betaler frem til ${agEnd.toLocaleDateString('nb-NO')}.`;
+            
+            statusBox.innerHTML = `${agStatus}<br><br><strong>Husk:</strong> Søknad om sykepenger kan sendes tidligst ${end.toLocaleDateString('nb-NO')}.`;
+        } else {
+            statusBox.style.display = 'none';
+        }
+    }
 </script>
 
 </body>
