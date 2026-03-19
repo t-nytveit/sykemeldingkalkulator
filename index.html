@@ -93,9 +93,12 @@
         .archive-item {
             background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px;
             font-size: 0.8rem; display: flex; justify-content: space-between; align-items: flex-start;
+            cursor: pointer; transition: background 0.2s;
         }
+        .archive-item:hover { background: #f9fdf9; border-color: var(--primary); }
+        
         .archive-content { flex-grow: 1; line-height: 1.5; }
-        .btn-delete { color: #dc3545; border: none; background: none; cursor: pointer; font-size: 1.2rem; margin-left: 10px; }
+        .btn-delete { color: #dc3545; border: none; background: none; cursor: pointer; font-size: 1.2rem; margin-left: 10px; padding: 5px; }
 
         .info-text { font-size: 0.8rem; color: #555; background: var(--light-grey); padding: 12px; border-radius: 8px; margin-top: 15px; line-height: 1.5; border-left: 4px solid var(--primary); }
 
@@ -154,7 +157,7 @@
     <div id="statusInfo" class="info-text" style="display:none;"></div>
 
     <div class="archive-section">
-        <div class="section-title">Arkiverte perioder</div>
+        <div class="section-title">Arkiverte perioder (Trykk for å vise)</div>
         <div id="archiveList"></div>
     </div>
 
@@ -169,7 +172,7 @@
     window.onload = function() {
         const fields = ['stilling', 'sykemelding', 'fullUke', 'startDate', 'endDate'];
         fields.forEach(field => {
-            const saved = localStorage.getItem('haga_stilling_val') || localStorage.getItem('haga_' + field);
+            const saved = localStorage.getItem('haga_' + field);
             if (saved && document.getElementById(field)) {
                 document.getElementById(field).value = saved;
             }
@@ -258,6 +261,7 @@
         const end = document.getElementById('endDate').value;
         const grad = document.getElementById('sykemelding').value;
         const stilling = document.getElementById('stilling').value;
+        const fullUke = document.getElementById('fullUke').value;
         const timeText = document.getElementById('resultTimeFormat').innerText;
 
         if(!start || !end) return alert("Velg datoer først!");
@@ -268,6 +272,7 @@
             end, 
             grad, 
             stilling,
+            fullUke,
             timeInfo: timeText.replace('(', '').replace(')', '') 
         };
 
@@ -278,17 +283,34 @@
         calculate();
     }
 
+    // NY FUNKSJON: Lastet fra arkiv til kalkulator
+    function loadFromArchive(id) {
+        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        const entry = archive.find(item => item.id === id);
+        
+        if (entry) {
+            document.getElementById('startDate').value = entry.start;
+            document.getElementById('endDate').value = entry.end;
+            document.getElementById('sykemelding').value = entry.grad;
+            document.getElementById('stilling').value = entry.stilling;
+            if (entry.fullUke) document.getElementById('fullUke').value = entry.fullUke;
+            
+            calculate();
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    }
+
     function renderArchive() {
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         const list = document.getElementById('archiveList');
         list.innerHTML = archive.map(item => `
-            <div class="archive-item">
+            <div class="archive-item" onclick="loadFromArchive(${item.id})">
                 <div class="archive-content">
                     <strong>${item.grad}% Sykemeldt</strong> (${item.stilling}% stilling)<br>
                     📅 ${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}<br>
                     🕒 Jobbe: ${item.timeInfo}
                 </div>
-                <button class="btn-delete" onclick="deleteArchive(${item.id})">&times;</button>
+                <button class="btn-delete" onclick="event.stopPropagation(); deleteArchive(${item.id})">&times;</button>
             </div>
         `).join('');
     }
