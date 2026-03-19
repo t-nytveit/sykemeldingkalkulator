@@ -25,24 +25,14 @@
         body {
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             background-color: var(--bg);
-            display: flex;
-            justify-content: center;
-            align-items: flex-start;
-            min-height: 100vh;
-            margin: 0;
-            padding: 20px;
-            box-sizing: border-box;
+            display: flex; justify-content: center; align-items: flex-start;
+            min-height: 100vh; margin: 0; padding: 20px; box-sizing: border-box;
         }
 
         .container {
-            background: var(--card);
-            padding: 25px;
-            border-radius: 20px;
-            box-shadow: 0 10px 25px rgba(0,0,0,0.08);
-            width: 100%;
-            max-width: 440px;
-            display: flex;
-            flex-direction: column;
+            background: var(--card); padding: 25px; border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0,0,0,0.08); width: 100%; max-width: 440px;
+            display: flex; flex-direction: column;
         }
 
         .logo-container { text-align: center; margin-bottom: 20px; }
@@ -50,49 +40,34 @@
         h2 { color: #333; text-align: center; margin-top: 0; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
         .trend-alert {
-            background-color: #fff3cd;
-            border-left: 5px solid var(--warning);
-            color: #856404;
-            padding: 12px;
-            margin-bottom: 15px;
-            border-radius: 8px;
-            font-size: 0.85rem;
-            display: none;
-            line-height: 1.4;
+            background-color: #fff3cd; border-left: 5px solid var(--warning);
+            color: #856404; padding: 12px; margin-bottom: 15px; border-radius: 8px;
+            font-size: 0.85rem; display: none; line-height: 1.4;
         }
 
         .section-title {
-            font-size: 0.75rem;
-            color: var(--text-muted);
-            text-transform: uppercase;
-            margin: 15px 0 8px 0;
-            border-bottom: 1px solid #eee;
-            padding-bottom: 3px;
-            display: flex;
-            justify-content: space-between;
+            font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase;
+            margin: 15px 0 8px 0; border-bottom: 1px solid #eee; padding-bottom: 3px;
         }
 
         .input-group { margin-bottom: 10px; }
         label { display: block; margin-bottom: 3px; font-weight: 600; color: #444; font-size: 0.8rem; }
         input, select {
-            width: 100%;
-            padding: 10px;
-            border: 1.5px solid #dee2e6;
-            border-radius: 8px;
-            font-size: 15px;
-            box-sizing: border-box;
-            background-color: #fcfcfc;
+            width: 100%; padding: 10px; border: 1.5px solid #dee2e6; border-radius: 8px;
+            font-size: 15px; box-sizing: border-box; background-color: #fcfcfc;
         }
 
         .result-box {
             background: #f1f9f1; padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px; border: 1px solid #d4ecd5;
         }
         .result-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
+        .error-msg { color: var(--danger); font-size: 0.8rem; margin-top: 5px; font-weight: bold; display: none; }
 
         .btn-main {
             background-color: var(--primary); color: white; border: none; padding: 14px;
             border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.95rem;
         }
+        .btn-main:disabled { background-color: #ccc; cursor: not-allowed; }
         
         .btn-pdf {
             background-color: #333; color: white; border: none; padding: 10px;
@@ -100,10 +75,13 @@
         }
 
         .archive-item {
-            background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 8px;
-            font-size: 0.8rem; cursor: pointer;
+            background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px;
+            margin-bottom: 8px; font-size: 0.8rem; position: relative;
         }
-        .archive-item:hover { background: #f9fdf9; }
+        .btn-delete-item {
+            position: absolute; right: 10px; top: 12px; background: none; border: none;
+            color: var(--danger); font-size: 1.2rem; cursor: pointer; padding: 5px;
+        }
 
         .copyright { margin-top: 25px; text-align: center; font-size: 0.7rem; color: var(--text-muted); }
     </style>
@@ -151,13 +129,14 @@
 
     <div class="input-group"><label>Startdato</label><input type="date" id="startDate" oninput="calculate()"></div>
     <div class="input-group"><label>Sluttdato</label><input type="date" id="endDate" oninput="calculate()"></div>
+    <div id="dateError" class="error-msg">⚠️ Sluttdato kan ikke være før startdato!</div>
 
     <div class="result-box">
         <div id="result" class="result-value">0,00</div>
         <div id="resultTimeFormat" style="font-size: 0.85rem; color: #444;">(0t 0m å jobbe pr. uke)</div>
     </div>
 
-    <button class="btn-main" onclick="archivePeriod()">Arkiver periode</button>
+    <button id="archiveBtn" class="btn-main" onclick="archivePeriod()">Arkiver periode</button>
     <button class="btn-pdf" onclick="exportToPDF()">Generer PDF for personalmappe</button>
 
     <div class="archive-section">
@@ -191,9 +170,16 @@
         const type = document.getElementById('fraværType').value;
         const stilling = parseFloat(document.getElementById('stilling').value) || 0;
         const sykemelding = (type === 'Sykemelding') ? (parseFloat(document.getElementById('sykemelding').value) || 0) : 100;
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
         
         document.getElementById('gradInputGroup').style.display = (type === 'Sykemelding') ? 'block' : 'none';
         
+        // Validering av datoer
+        const isInvalid = start && end && (new Date(end) < new Date(start));
+        document.getElementById('dateError').style.display = isInvalid ? 'block' : 'none';
+        document.getElementById('archiveBtn').disabled = isInvalid;
+
         const timerUke = (stilling / 100) * ((100 - sykemelding) / 100) * 37.5;
         document.getElementById('result').innerText = timerUke.toLocaleString('no-NO', { minimumFractionDigits: 2 });
         const h = Math.floor(timerUke);
@@ -201,8 +187,8 @@
         document.getElementById('resultTimeFormat').innerText = `(${h}t ${m}m å jobbe pr. uke)`;
 
         localStorage.setItem('haga_fraværType', type);
-        localStorage.setItem('haga_startDate', document.getElementById('startDate').value);
-        localStorage.setItem('haga_endDate', document.getElementById('endDate').value);
+        localStorage.setItem('haga_startDate', start);
+        localStorage.setItem('haga_endDate', end);
     }
 
     function checkTrends() {
@@ -226,15 +212,22 @@
     }
 
     function archivePeriod() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+
+        if (!start || !end) return alert("Vennligst fyll ut datoer!");
+        if (new Date(end) < new Date(start)) return; // Stopper dersom datoene er feil
+
         const entry = {
             id: Date.now(),
             type: document.getElementById('fraværType').value,
-            start: document.getElementById('startDate').value,
-            end: document.getElementById('endDate').value,
+            start: start,
+            end: end,
             grad: document.getElementById('sykemelding').value,
             stilling: document.getElementById('stilling').value,
             timeInfo: document.getElementById('resultTimeFormat').innerText
         };
+
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive.unshift(entry);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
@@ -248,14 +241,14 @@
             <div class="archive-item">
                 <div style="font-weight:bold; color:var(--primary);">${item.type}</div>
                 <div style="font-size:0.75rem;">${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</div>
-                <div style="font-size:0.7rem; color:#666;">Stillingsgrad: ${item.stilling}% | ${item.timeInfo}</div>
-                <button onclick="deleteItem(${item.id})" style="position:absolute; right:10px; top:15px; color:red; border:none; background:none; cursor:pointer;">&times;</button>
+                <div style="font-size:0.7rem; color:#666;">${item.timeInfo}</div>
+                <button class="btn-delete-item" onclick="deleteItem(${item.id})">&times;</button>
             </div>
         `).join('');
     }
 
     function deleteItem(id) {
-        if(!confirm("Slette perioden?")) return;
+        if(!confirm("Vil du slette denne perioden fra arkivet?")) return;
         let archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive = archive.filter(p => p.id !== id);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
@@ -270,19 +263,16 @@
         const name = document.getElementById('userName').value || "Ikke oppgitt";
         const store = document.getElementById('userStore').value || "Ikke oppgitt";
 
-        // Overskrift
         doc.setFontSize(22);
-        doc.setTextColor(24, 150, 30); // KIWI Grønn
+        doc.setTextColor(24, 150, 30);
         doc.text("FRAVÆRSRAPPORT", 105, 20, { align: "center" });
         
-        // Info boks
         doc.setFontSize(10);
         doc.setTextColor(0, 0, 0);
         doc.text(`Ansatt: ${name}`, 20, 35);
         doc.text(`Butikk: ${store}`, 20, 40);
         doc.text(`Dato generert: ${new Date().toLocaleDateString('nb-NO')}`, 20, 45);
 
-        // Tabell-data
         const tableRows = archive.map(item => [
             item.type,
             `${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}`,
@@ -298,14 +288,8 @@
             theme: 'grid'
         });
 
-        const finalY = doc.lastAutoTable.finalY + 20;
-        doc.setFontSize(9);
-        doc.setFont(undefined, 'italic');
-        doc.text("Dette dokumentet er generert som grunnlag for oppfølgingsplan og dokumentasjon av fraværskvoter.", 20, finalY);
-
         doc.save(`Fravær_${name.replace(/\s+/g, '_')}.pdf`);
     }
 </script>
-
 </body>
 </html>
