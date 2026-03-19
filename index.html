@@ -17,6 +17,7 @@
             --card: #ffffff;
             --text-muted: #6c757d;
             --light-grey: #f8f9fa;
+            --danger: #dc3545;
         }
         
         body {
@@ -53,6 +54,9 @@
             margin: 20px 0 10px 0;
             border-bottom: 1px solid #eee;
             padding-bottom: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
         .input-group { margin-bottom: 12px; }
@@ -89,6 +93,12 @@
             border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 15px; font-size: 0.9rem;
         }
 
+        .btn-reset {
+            background: none; border: 1px solid #ccc; color: #666; padding: 4px 8px;
+            border-radius: 6px; cursor: pointer; font-size: 0.7rem; font-weight: 600;
+        }
+        .btn-reset:hover { background: #eee; }
+
         .archive-section { margin-top: 30px; }
         .archive-item {
             background: #fff; border: 1px solid #eee; padding: 12px; border-radius: 10px; margin-bottom: 10px;
@@ -98,9 +108,10 @@
         .archive-item:hover { background: #f9fdf9; border-color: var(--primary); }
         
         .archive-content { flex-grow: 1; line-height: 1.5; }
-        .btn-delete { color: #dc3545; border: none; background: none; cursor: pointer; font-size: 1.2rem; margin-left: 10px; padding: 5px; }
+        .btn-delete { color: var(--danger); border: none; background: none; cursor: pointer; font-size: 1.2rem; margin-left: 10px; padding: 5px; }
 
         .info-text { font-size: 0.8rem; color: #555; background: var(--light-grey); padding: 12px; border-radius: 8px; margin-top: 15px; line-height: 1.5; border-left: 4px solid var(--primary); }
+        .error-text { color: var(--danger); border-left-color: var(--danger); }
 
         .copyright { margin-top: 25px; text-align: center; font-size: 0.7rem; color: var(--text-muted); }
     </style>
@@ -112,9 +123,11 @@
         <img src="kiwi-logo-e1620058626739-1024x346.png" alt="KIWI Logo">
     </div>
 
-    <h2>Kalkulator</h2>
+    <div class="section-title">
+        <span>Kalkulator</span>
+        <button class="btn-reset" onclick="resetInputs()">Nullstill</button>
+    </div>
     
-    <div class="section-title">Arbeidstid</div>
     <div class="input-group">
         <label>Stillingsstørrelse (%)</label>
         <input type="number" id="stilling" value="100" oninput="calculate()" inputmode="decimal">
@@ -157,7 +170,7 @@
     <div id="statusInfo" class="info-text" style="display:none;"></div>
 
     <div class="archive-section">
-        <div class="section-title">Arkiverte perioder (Trykk for å vise)</div>
+        <div class="section-title">Arkiverte perioder</div>
         <div id="archiveList"></div>
     </div>
 
@@ -181,14 +194,25 @@
         calculate();
     };
 
+    function resetInputs() {
+        if(!confirm("Vil du nullstille kalkulatoren? (Arkivet blir ikke slettet)")) return;
+        document.getElementById('startDate').value = '';
+        document.getElementById('endDate').value = '';
+        document.getElementById('sykemelding').value = 40;
+        document.getElementById('stilling').value = 100;
+        document.getElementById('fullUke').value = 37.5;
+        calculate();
+    }
+
     function calculate() {
         const stilling = parseFloat(document.getElementById('stilling').value) || 0;
         const sykemelding = parseFloat(document.getElementById('sykemelding').value) || 0;
         const fullUke = parseFloat(document.getElementById('fullUke').value) || 37.5;
         const startVal = document.getElementById('startDate').value;
         const endVal = document.getElementById('endDate').value;
+        const statusBox = document.getElementById('statusInfo');
 
-        // Lagre nåværende inputverdier
+        // Lagre
         localStorage.setItem('haga_stilling', stilling);
         localStorage.setItem('haga_sykemelding', sykemelding);
         localStorage.setItem('haga_fullUke', fullUke);
@@ -197,30 +221,38 @@
 
         const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
         const timerUke = restArbeidsevneFaktor * fullUke;
-        
         const h = Math.floor(timerUke);
         const m = Math.round((timerUke - h) * 60);
         
-        document.getElementById('result').innerText = timerUke.toLocaleString('no-NO', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+        document.getElementById('result').innerText = timerUke.toLocaleString('no-NO', { minimumFractionDigits: 2 });
         document.getElementById('resultTimeFormat').innerText = `(${h} timer og ${m} minutter)`;
 
-        const restProsent = restArbeidsevneFaktor * 100;
         for(let i=0; i<7; i++) {
-            document.getElementById(`fill-${i}`).style.height = restProsent + '%';
+            document.getElementById(`fill-${i}`).style.height = (restArbeidsevneFaktor * 100) + '%';
         }
 
-        const statusBox = document.getElementById('statusInfo');
         if (startVal && endVal) {
             const start = new Date(startVal);
             const end = new Date(endVal);
             const today = new Date();
             today.setHours(0,0,0,0);
 
+            // SJEKK FOR UGYLDIG DATO (Slutt før start)
+            if (end < start) {
+                statusBox.style.display = 'block';
+                statusBox.classList.add('error-text');
+                statusBox.innerHTML = "⚠️ Feil: Sluttdato kan ikke være tidligere enn startdato.";
+                document.getElementById('progressBar').style.width = '0%';
+                document.getElementById('progressLabel').innerText = 'Dato-feil';
+                return;
+            }
+            statusBox.classList.remove('error-text');
+
             const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
             let effectiveStartDate = start;
 
-            let foundLink = true;
             let currentCheckDate = start;
+            let foundLink = true;
             while(foundLink) {
                 const prevPeriod = archive.find(p => {
                     const pEnd = new Date(p.end);
@@ -230,9 +262,7 @@
                 if(prevPeriod) {
                     effectiveStartDate = new Date(prevPeriod.start);
                     currentCheckDate = effectiveStartDate;
-                } else {
-                    foundLink = false;
-                }
+                } else { foundLink = false; }
             }
 
             let agEnd = new Date(effectiveStartDate);
@@ -247,11 +277,11 @@
             
             statusBox.style.display = 'block';
             let msg = today > agEnd 
-                ? "✅ Arbeidsgiverperioden er over (basert på sammenhengende fravær)." 
-                : `⏳ Arbeidsgiver betaler til ${agEnd.toLocaleDateString('nb-NO')}.`;
+                ? `✅ Arbeidsgiverperioden er over (${agEnd.toLocaleDateString('nb-NO')}). NAV dekker nå sykepenger.` 
+                : `⏳ Arbeidsgiver betaler til og med ${agEnd.toLocaleDateString('nb-NO')}.`;
             
             if (effectiveStartDate.getTime() !== start.getTime()) {
-                msg += `<br><small><i>(Forløp startet: ${effectiveStartDate.toLocaleDateString('nb-NO')})</i></small>`;
+                msg += `<br><small><i>(Basert på sammenhengende forløp fra: ${effectiveStartDate.toLocaleDateString('nb-NO')})</i></small>`;
             }
             statusBox.innerHTML = msg;
         } else { statusBox.style.display = 'none'; }
@@ -260,21 +290,14 @@
     function archivePeriod() {
         const start = document.getElementById('startDate').value;
         const end = document.getElementById('endDate').value;
-        const grad = document.getElementById('sykemelding').value;
-        const stilling = document.getElementById('stilling').value;
-        const fullUke = document.getElementById('fullUke').value;
-        const timeText = document.getElementById('resultTimeFormat').innerText;
-
-        if(!start || !end) return alert("Velg datoer først!");
+        if(!start || !end || new Date(end) < new Date(start)) return alert("Sjekk at datoene er gyldige!");
 
         const entry = { 
-            id: Date.now(), 
-            start, 
-            end, 
-            grad, 
-            stilling,
-            fullUke,
-            timeInfo: timeText.replace('(', '').replace(')', '') 
+            id: Date.now(), start, end, 
+            grad: document.getElementById('sykemelding').value, 
+            stilling: document.getElementById('stilling').value,
+            fullUke: document.getElementById('fullUke').value,
+            timeInfo: document.getElementById('resultTimeFormat').innerText.replace('(', '').replace(')', '') 
         };
 
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
@@ -287,21 +310,13 @@
     function loadFromArchive(id) {
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         const entry = archive.find(item => item.id === id);
-        
         if (entry) {
-            // Sett verdiene i input-feltene
             document.getElementById('startDate').value = entry.start;
             document.getElementById('endDate').value = entry.end;
             document.getElementById('sykemelding').value = entry.grad;
             document.getElementById('stilling').value = entry.stilling;
-            
-            // Sjekk om gammelt arkivpunkt har fullUke lagret, hvis ikke bruk standard 37.5
             document.getElementById('fullUke').value = entry.fullUke || 37.5;
-            
-            // Tving ny beregning
             calculate();
-            
-            // Rull opp til toppen
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
@@ -322,7 +337,7 @@
     }
 
     function deleteArchive(id) {
-        if(!confirm("Slette denne perioden fra arkivet?")) return;
+        if(!confirm("Slette fra arkivet?")) return;
         let archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         archive = archive.filter(item => item.id !== id);
         localStorage.setItem('haga_archive', JSON.stringify(archive));
