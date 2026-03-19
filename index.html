@@ -154,7 +154,9 @@
         const fields = ['stilling', 'sykemelding', 'startDate', 'endDate', 'fraværType', 'userName', 'userStore'];
         fields.forEach(field => {
             const saved = localStorage.getItem('haga_' + field);
-            if (saved) document.getElementById(field).value = saved;
+            if (saved && document.getElementById(field)) {
+                document.getElementById(field).value = saved;
+            }
         });
         checkTrends();
         renderArchive();
@@ -175,7 +177,6 @@
         
         document.getElementById('gradInputGroup').style.display = (type === 'Sykemelding') ? 'block' : 'none';
         
-        // Validering av datoer
         const isInvalid = start && end && (new Date(end) < new Date(start));
         document.getElementById('dateError').style.display = isInvalid ? 'block' : 'none';
         document.getElementById('archiveBtn').disabled = isInvalid;
@@ -216,7 +217,7 @@
         const end = document.getElementById('endDate').value;
 
         if (!start || !end) return alert("Vennligst fyll ut datoer!");
-        if (new Date(end) < new Date(start)) return; // Stopper dersom datoene er feil
+        if (new Date(end) < new Date(start)) return;
 
         const entry = {
             id: Date.now(),
@@ -237,14 +238,19 @@
 
     function renderArchive() {
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-        document.getElementById('archiveList').innerHTML = archive.map(item => `
-            <div class="archive-item">
-                <div style="font-weight:bold; color:var(--primary);">${item.type}</div>
-                <div style="font-size:0.75rem;">${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</div>
-                <div style="font-size:0.7rem; color:#666;">${item.timeInfo}</div>
-                <button class="btn-delete-item" onclick="deleteItem(${item.id})">&times;</button>
-            </div>
-        `).join('');
+        document.getElementById('archiveList').innerHTML = archive.map(item => {
+            // Lager dynamisk tittel basert på type og grad
+            const displayTitle = item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type;
+            
+            return `
+                <div class="archive-item">
+                    <div style="font-weight:bold; color:var(--primary);">${displayTitle}</div>
+                    <div style="font-size:0.75rem;">${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</div>
+                    <div style="font-size:0.7rem; color:#666;">Stillingsgrad: ${item.stilling}% | ${item.timeInfo}</div>
+                    <button class="btn-delete-item" onclick="deleteItem(${item.id})">&times;</button>
+                </div>
+            `;
+        }).join('');
     }
 
     function deleteItem(id) {
@@ -274,15 +280,15 @@
         doc.text(`Dato generert: ${new Date().toLocaleDateString('nb-NO')}`, 20, 45);
 
         const tableRows = archive.map(item => [
-            item.type,
+            item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type,
             `${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}`,
-            item.type === 'Sykemelding' ? item.grad + "%" : "100%",
-            item.timeInfo.replace('(', '').replace(')', '')
+            item.stilling + "%",
+            item.timeInfo.replace('(', '').replace(')', '').replace(' å jobbe pr. uke', '')
         ]);
 
         doc.autoTable({
             startY: 55,
-            head: [['Type', 'Periode', 'Grad', 'Arbeidstid']],
+            head: [['Type', 'Periode', 'Stillingsstr.', 'Arbeidstid']],
             body: tableRows,
             headStyles: { fillColor: [24, 150, 30] },
             theme: 'grid'
