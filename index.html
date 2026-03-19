@@ -7,13 +7,12 @@
     
     <link rel="manifest" href="manifest.json">
     <meta name="theme-color" content="#18961e">
-
     <link rel="apple-touch-icon" href="k_icon.png">
     <link rel="icon" type="image/png" href="k_icon.png">
 
     <style>
         :root {
-            --primary: #18961e; /* KIWI-grønn fargeprofil */
+            --primary: #18961e; 
             --bg: #f4f7f6;
             --card: #ffffff;
             --text-muted: #6c757d;
@@ -25,7 +24,7 @@
             background-color: var(--bg);
             display: flex;
             justify-content: center;
-            align-items: center;
+            align-items: flex-start; /* Endret fra center for å gi plass til arkiv */
             min-height: 100vh;
             margin: 0;
             padding: 20px;
@@ -43,25 +42,9 @@
             flex-direction: column;
         }
 
-        .logo-container {
-            text-align: center;
-            margin-bottom: 20px;
-        }
-
-        .logo-container img {
-            max-width: 150px;
-            height: auto;
-        }
-
-        h2 { 
-            color: #333; 
-            text-align: center; 
-            margin-top: 0; 
-            font-size: 1.1rem; 
-            font-weight: 700; 
-            text-transform: uppercase; 
-            letter-spacing: 1px; 
-        }
+        .logo-container { text-align: center; margin-bottom: 20px; }
+        .logo-container img { max-width: 150px; height: auto; }
+        h2 { color: #333; text-align: center; margin-top: 0; font-size: 1.1rem; font-weight: 700; text-transform: uppercase; letter-spacing: 1px; }
 
         .section-title {
             font-size: 0.8rem;
@@ -73,15 +56,7 @@
         }
 
         .input-group { margin-bottom: 12px; }
-
-        label { 
-            display: block; 
-            margin-bottom: 4px; 
-            font-weight: 600; 
-            color: #444; 
-            font-size: 0.85rem; 
-        }
-
+        label { display: block; margin-bottom: 4px; font-weight: 600; color: #444; font-size: 0.85rem; }
         input {
             width: 100%;
             padding: 12px;
@@ -90,16 +65,40 @@
             font-size: 16px;
             box-sizing: border-box;
             background-color: #fcfcfc;
-            -webkit-appearance: none;
         }
 
-        input:focus { 
-            border-color: var(--primary); 
-            outline: none; 
-            background-color: #fff; 
+        /* Uke-visualisering */
+        .week-viz {
+            display: flex;
+            justify-content: space-between;
+            margin: 15px 0;
+        }
+        .day-circle {
+            width: 35px;
+            height: 35px;
+            border-radius: 50%;
+            border: 2px solid #ddd;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.7rem;
+            font-weight: bold;
+            color: #999;
+            position: relative;
+            overflow: hidden;
+        }
+        .day-fill {
+            position: absolute;
+            bottom: 0;
+            left: 0;
+            width: 100%;
+            background-color: var(--primary);
+            opacity: 0.3;
+            transition: height 0.5s ease;
         }
 
-        /* Resultat-seksjon */
+        /* Resultat & Progress */
         .result-box {
             background: #f1f9f1;
             padding: 15px;
@@ -108,43 +107,40 @@
             margin-top: 20px;
             border: 1px solid #d4ecd5;
         }
+        .result-value { font-size: 1.8rem; font-weight: 800; color: var(--primary); }
+        .result-detail { font-size: 0.85rem; color: #444; margin-bottom: 10px; }
 
-        .result-label { font-size: 0.9rem; color: #444; margin-bottom: 5px; }
-        .result-value { font-size: 2rem; font-weight: 800; color: var(--primary); }
-        .result-detail { font-size: 0.95rem; color: #444; font-weight: 500; margin-top: -5px; margin-bottom: 10px; }
+        .progress-container { width: 100%; background-color: #e9ecef; border-radius: 10px; height: 8px; margin: 10px 0; overflow: hidden; }
+        .progress-bar { height: 100%; background-color: var(--primary); width: 0%; transition: width 0.5s ease; }
 
-        /* Progress Bar */
-        .progress-container {
-            width: 100%;
-            background-color: #e9ecef;
-            border-radius: 10px;
-            height: 10px;
-            margin: 10px 0 5px 0;
-            overflow: hidden;
-        }
-        .progress-bar {
-            height: 100%;
+        .btn-archive {
             background-color: var(--primary);
-            width: 0%;
-            transition: width 0.5s ease;
+            color: white;
+            border: none;
+            padding: 12px;
+            border-radius: 10px;
+            font-weight: bold;
+            cursor: pointer;
+            margin-top: 15px;
+            font-size: 0.9rem;
         }
 
-        .info-text {
-            font-size: 0.8rem;
-            color: #555;
-            background: var(--light-grey);
+        /* Arkiv-liste */
+        .archive-section { margin-top: 30px; }
+        .archive-item {
+            background: #fff;
+            border: 1px solid #eee;
             padding: 10px;
             border-radius: 8px;
-            margin-top: 10px;
-            line-height: 1.4;
+            margin-bottom: 8px;
+            font-size: 0.8rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
+        .btn-delete { color: #dc3545; border: none; background: none; cursor: pointer; font-size: 1.1rem; }
 
-        .copyright {
-            margin-top: 25px;
-            text-align: center;
-            font-size: 0.7rem;
-            color: var(--text-muted);
-        }
+        .copyright { margin-top: 25px; text-align: center; font-size: 0.7rem; color: var(--text-muted); }
     </style>
 </head>
 <body>
@@ -161,39 +157,47 @@
         <label>Stillingsstørrelse (%)</label>
         <input type="number" id="stilling" value="100" oninput="calculate()" inputmode="decimal">
     </div>
-
     <div class="input-group">
         <label>Sykemeldingsprosent (%)</label>
         <input type="number" id="sykemelding" value="40" oninput="calculate()" inputmode="decimal">
     </div>
-
     <div class="input-group">
         <label>Timer i full uke (100%)</label>
         <input type="number" id="fullUke" value="37.5" step="0.5" oninput="calculate()" inputmode="decimal">
     </div>
 
-    <div class="section-title">Periode & Status</div>
-    <div class="input-group">
-        <label>Startdato sykemelding</label>
-        <input type="date" id="startDate" oninput="calculate()">
+    <div class="section-title">Ukesoversikt (Arbeidsevne)</div>
+    <div class="week-viz">
+        <div class="day-circle"><div class="day-fill" id="fill-0"></div>M</div>
+        <div class="day-circle"><div class="day-fill" id="fill-1"></div>T</div>
+        <div class="day-circle"><div class="day-fill" id="fill-2"></div>O</div>
+        <div class="day-circle"><div class="day-fill" id="fill-3"></div>T</div>
+        <div class="day-circle"><div class="day-fill" id="fill-4"></div>F</div>
+        <div class="day-circle"><div class="day-fill" id="fill-5"></div>L</div>
+        <div class="day-circle"><div class="day-fill" id="fill-6"></div>S</div>
     </div>
-    <div class="input-group">
-        <label>Sluttdato sykemelding</label>
-        <input type="date" id="endDate" oninput="calculate()">
-    </div>
+
+    <div class="section-title">Periode</div>
+    <div class="input-group"><label>Startdato</label><input type="date" id="startDate" oninput="calculate()"></div>
+    <div class="input-group"><label>Sluttdato</label><input type="date" id="endDate" oninput="calculate()"></div>
 
     <div class="result-box">
-        <div class="result-label">Timer du skal jobbe pr. uke:</div>
+        <div class="result-label">Timer å jobbe pr. uke:</div>
         <div id="result" class="result-value">0,00</div>
-        <div id="resultTimeFormat" class="result-detail">(0 timer og 0 minutter)</div>
+        <div id="resultTimeFormat" class="result-detail">(0t 0m)</div>
         
-        <div class="progress-container">
-            <div id="progressBar" class="progress-bar"></div>
-        </div>
-        <div id="progressLabel" style="font-size: 0.75rem; font-weight: bold; color: var(--primary);">0% fullført</div>
+        <div class="progress-container"><div id="progressBar" class="progress-bar"></div></div>
+        <div id="progressLabel" style="font-size: 0.7rem; font-weight: bold; color: var(--primary);">0% fullført</div>
     </div>
 
-    <div id="statusInfo" class="info-text" style="display:none;"></div>
+    <button class="btn-archive" onclick="archivePeriod()">Arkiver denne perioden</button>
+
+    <div id="statusInfo" class="info-text" style="display:none; margin-top:15px;"></div>
+
+    <div class="archive-section">
+        <div class="section-title">Arkiverte perioder</div>
+        <div id="archiveList"></div>
+    </div>
 
     <div class="copyright">
         &copy; <span id="year"></span> Copyright Thomas Nytveit
@@ -209,6 +213,7 @@
             const saved = localStorage.getItem('haga_' + field);
             if (saved) document.getElementById(field).value = saved;
         });
+        renderArchive();
         calculate();
     };
 
@@ -219,60 +224,76 @@
         const startVal = document.getElementById('startDate').value;
         const endVal = document.getElementById('endDate').value;
 
-        // Lagre verdier
+        // Lagre
         localStorage.setItem('haga_stilling', stilling);
         localStorage.setItem('haga_sykemelding', sykemelding);
         localStorage.setItem('haga_fullUke', fullUke);
         localStorage.setItem('haga_startDate', startVal);
         localStorage.setItem('haga_endDate', endVal);
 
-        // 1. Regn ut timer desimal
+        // Beregn timer
         const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
-        const timerSkalJobbeDesimal = restArbeidsevneFaktor * fullUke;
+        const timerUke = restArbeidsevneFaktor * fullUke;
         
-        // Oppdater desimalvisning
-        document.getElementById('result').innerText = timerSkalJobbeDesimal.toLocaleString('no-NO', { 
-            minimumFractionDigits: 2, 
-            maximumFractionDigits: 2 
-        });
+        document.getElementById('result').innerText = timerUke.toLocaleString('no-NO', { minimumFractionDigits: 2 });
+        const h = Math.floor(timerUke);
+        const m = Math.round((timerUke - h) * 60);
+        document.getElementById('resultTimeFormat').innerText = `(${h} timer og ${m} minutter)`;
 
-        // 2. Regn om til timer og minutter
-        const timerHeltall = Math.floor(timerSkalJobbeDesimal);
-        const minutter = Math.round((timerSkalJobbeDesimal - timerHeltall) * 60);
-        document.getElementById('resultTimeFormat').innerText = `(${timerHeltall} timer og ${minutter} minutter)`;
+        // Oppdater ukes-viz (Sirkler)
+        const restProsent = restArbeidsevneFaktor * 100;
+        for(let i=0; i<7; i++) {
+            document.getElementById(`fill-${i}`).style.height = restProsent + '%';
+        }
 
-        // 3. Dato-beregninger og Progress Bar
+        // Progress & Status
         const statusBox = document.getElementById('statusInfo');
         if (startVal && endVal) {
-            const start = new Date(startVal);
-            const end = new Date(endVal);
-            const today = new Date();
+            const start = new Date(startVal); const end = new Date(endVal); const today = new Date();
             today.setHours(0,0,0,0);
-
-            let agEnd = new Date(start);
-            agEnd.setDate(start.getDate() + 15);
-
+            let agEnd = new Date(start); agEnd.setDate(start.getDate() + 15);
+            
             const total = end - start;
             const current = today - start;
-            let percent = 0;
-            if (total > 0) {
-                percent = Math.min(100, Math.max(0, Math.round((current / total) * 100)));
-            }
+            let percent = total > 0 ? Math.min(100, Math.max(0, Math.round((current / total) * 100))) : 0;
             
             document.getElementById('progressBar').style.width = percent + '%';
             document.getElementById('progressLabel').innerText = percent + '% fullført';
-
             statusBox.style.display = 'block';
-            let agStatus = today > agEnd 
-                ? "✅ Arbeidsgiverperioden er over. NAV dekker nå sykepenger." 
-                : `⏳ Arbeidsgiver betaler frem til ${agEnd.toLocaleDateString('nb-NO')}.`;
-            
-            statusBox.innerHTML = `${agStatus}<br><br><strong>Husk:</strong> Søknad om sykepenger kan sendes tidligst ${end.toLocaleDateString('nb-NO')}.`;
-        } else {
-            statusBox.style.display = 'none';
-        }
+            statusBox.innerHTML = today > agEnd ? "✅ NAV dekker nå sykepenger." : `⏳ Arbeidsgiver betaler til ${agEnd.toLocaleDateString('nb-NO')}.`;
+        } else { statusBox.style.display = 'none'; }
+    }
+
+    function archivePeriod() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        const grad = document.getElementById('sykemelding').value;
+        if(!start || !end) return alert("Mangler datoer");
+
+        const entry = { id: Date.now(), start, end, grad };
+        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        archive.unshift(entry);
+        localStorage.setItem('haga_archive', JSON.stringify(archive));
+        renderArchive();
+    }
+
+    function renderArchive() {
+        const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        const list = document.getElementById('archiveList');
+        list.innerHTML = archive.map(item => `
+            <div class="archive-item">
+                <span><strong>${item.grad}%</strong>: ${new Date(item.start).toLocaleDateString('nb-NO')} - ${new Date(item.end).toLocaleDateString('nb-NO')}</span>
+                <button class="btn-delete" onclick="deleteArchive(${item.id})">&times;</button>
+            </div>
+        `).join('');
+    }
+
+    function deleteArchive(id) {
+        let archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
+        archive = archive.filter(item => item.id !== id);
+        localStorage.setItem('haga_archive', JSON.stringify(archive));
+        renderArchive();
     }
 </script>
-
 </body>
 </html>
