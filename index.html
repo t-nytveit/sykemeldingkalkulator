@@ -217,10 +217,8 @@
         document.getElementById('ruleError').style.display = isRuleInvalid ? 'block' : 'none';
         document.getElementById('archiveBtn').disabled = isDateInvalid || isDurationInvalid || isRuleInvalid;
 
-        // BEREGNING AV ARBEIDSGIVERPERIODE (HENSTYNSTOK ARKIV)
         const agBox = document.getElementById('agPeriodInfo');
         if(type === 'Sykemelding' && startVal && !isDateInvalid) {
-            // Finn historisk start (første dag i sammenhengende fravær)
             let currentChainStart = new Date(start);
             let checkNext = true;
             let tempArchive = [...archive].sort((a,b) => new Date(b.start) - new Date(a.start));
@@ -262,9 +260,13 @@
     }
 
     function archivePeriod() {
+        const start = document.getElementById('startDate').value;
+        const end = document.getElementById('endDate').value;
+        if(!start || !end) return alert("Fyll ut datoer!");
+        
         const entry = {
             id: Date.now(), type: document.getElementById('fraværType').value,
-            start: document.getElementById('startDate').value, end: document.getElementById('endDate').value,
+            start: start, end: end,
             grad: document.getElementById('sykemelding').value, stilling: document.getElementById('stilling').value,
             timeInfo: document.getElementById('resultTimeFormat').innerText
         };
@@ -302,9 +304,13 @@
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         const now = new Date(); const yr = now.getFullYear();
         const twelve = new Date(); twelve.setFullYear(now.getFullYear() - 1);
+        
         const eg = archive.filter(p => p.type === 'Egenmelding' && new Date(p.start) > twelve).length;
+        
+        // Fikset variabelnavn her fra "sykt barn dager" til "sb"
         const sb = archive.filter(p => p.type === 'Sykt barn' && new Date(p.start).getFullYear() === yr)
             .reduce((t, p) => t + (Math.ceil((new Date(p.end) - new Date(p.start)) / 86400000) + 1), 0);
+            
         const warn = document.getElementById('trendWarning');
         let txt = [];
         if (eg >= 4) txt.push(`<strong>OBS:</strong> 4 egenmeldinger siste 12 mnd.`);
