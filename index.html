@@ -13,7 +13,7 @@
 
     <style>
         :root {
-            --primary: #18961e; /* KIWI-grønn */
+            --primary: #18961e; /* KIWI-grønn fargeprofil */
             --bg: #f4f7f6;
             --card: #ffffff;
             --text-muted: #6c757d;
@@ -80,7 +80,7 @@
             font-size: 16px;
             box-sizing: border-box;
             background-color: #fcfcfc;
-            -webkit-appearance: none; /* Fjerner default styling på iOS */
+            -webkit-appearance: none; /* Fjerner default styling på iPhone */
         }
 
         input:focus { 
@@ -171,9 +171,13 @@
         const sykemelding = parseFloat(document.getElementById('sykemelding').value) || 0;
         const fullUke = parseFloat(document.getElementById('fullUke').value) || 37.5;
 
-        // Beregningslogikk
+        // Regner ut rest-prosent av en 100% stilling
         const restArbeidsevneFaktor = (stilling / 100) * ((100 - sykemelding) / 100);
+        
+        // Regner ut antall timer basert på arbeidstiden for en full stilling
         const timerSkalJobbe = restArbeidsevneFaktor * fullUke;
+        
+        // Viser restarbeidsevne i prosent (f.eks. 60% av 100% stilling)
         const restVisning = restArbeidsevneFaktor * 100;
 
         document.getElementById('restProsent').innerText = restVisning.toFixed(1).replace('.', ',');
