@@ -188,6 +188,7 @@
         const startVal = document.getElementById('startDate').value;
         const endVal = document.getElementById('endDate').value;
 
+        // Lagre nåværende inputverdier
         localStorage.setItem('haga_stilling', stilling);
         localStorage.setItem('haga_sykemelding', sykemelding);
         localStorage.setItem('haga_fullUke', fullUke);
@@ -283,19 +284,24 @@
         calculate();
     }
 
-    // NY FUNKSJON: Lastet fra arkiv til kalkulator
     function loadFromArchive(id) {
         const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
         const entry = archive.find(item => item.id === id);
         
         if (entry) {
+            // Sett verdiene i input-feltene
             document.getElementById('startDate').value = entry.start;
             document.getElementById('endDate').value = entry.end;
             document.getElementById('sykemelding').value = entry.grad;
             document.getElementById('stilling').value = entry.stilling;
-            if (entry.fullUke) document.getElementById('fullUke').value = entry.fullUke;
             
+            // Sjekk om gammelt arkivpunkt har fullUke lagret, hvis ikke bruk standard 37.5
+            document.getElementById('fullUke').value = entry.fullUke || 37.5;
+            
+            // Tving ny beregning
             calculate();
+            
+            // Rull opp til toppen
             window.scrollTo({ top: 0, behavior: 'smooth' });
         }
     }
