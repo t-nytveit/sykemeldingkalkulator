@@ -61,13 +61,13 @@
             background: #f1f9f1; padding: 15px; border-radius: 12px; text-align: center; margin-top: 15px; border: 1px solid #d4ecd5;
         }
         .result-value { font-size: 1.6rem; font-weight: 800; color: var(--primary); }
-        .error-msg { color: var(--danger); font-size: 0.8rem; margin-top: 8px; font-weight: bold; display: none; line-height: 1.4; }
+        .error-msg { color: var(--danger); font-size: 0.8rem; margin-top: 8px; font-weight: bold; display: none; line-height: 1.4; padding: 8px; background: #fff1f1; border-radius: 6px; }
 
         .btn-main {
             background-color: var(--primary); color: white; border: none; padding: 14px;
             border-radius: 10px; font-weight: bold; cursor: pointer; margin-top: 10px; font-size: 0.95rem;
         }
-        .btn-main:disabled { background-color: #ccc; cursor: not-allowed; }
+        .btn-main:disabled { background-color: #ccc; cursor: not-allowed; opacity: 0.7; }
         
         .btn-pdf {
             background-color: #333; color: white; border: none; padding: 10px;
@@ -111,7 +111,7 @@
     <div class="input-group">
         <label>Type fravær</label>
         <select id="fraværType" onchange="calculate()">
-            <option value="Sykemelding">Sykemelding (Gradert/100%)</option>
+            <option value="Sykemelding">Sykemelding (Legeerklært)</option>
             <option value="Egenmelding">Egenmelding (Egen sykdom)</option>
             <option value="Sykt barn">Egenmelding (Sykt barn)</option>
         </select>
@@ -131,7 +131,8 @@
     <div class="input-group"><label>Sluttdato</label><input type="date" id="endDate" oninput="calculate()"></div>
     
     <div id="dateError" class="error-msg">⚠️ Sluttdato kan ikke være før startdato!</div>
-    <div id="ruleError" class="error-msg">⚠️ Kan ikke bruke egenmelding før det er gått 16 dager etter en sykemelding. Bruker må ha legeerklæring.</div>
+    <div id="ruleError" class="error-msg">⚠️ Kan ikke bruke egenmelding før det er gått 16 dager etter forrige fravær. Bruker må ha legeerklæring.</div>
+    <div id="durationError" class="error-msg">⚠️ Egenmelding for egen sykdom kan maks vare i 3 dager. Ved lengre fravær kreves sykemelding fra lege.</div>
 
     <div class="result-box">
         <div id="result" class="result-value">0,00</div>
@@ -179,30 +180,41 @@
         
         document.getElementById('gradInputGroup').style.display = (type === 'Sykemelding') ? 'block' : 'none';
         
-        // 1. Sjekk for sluttdato før startdato
-        const isDateInvalid = startVal && endVal && (new Date(endVal) < new Date(startVal));
+        const start = new Date(startVal);
+        const end = new Date(endVal);
+
+        // 1. Dato-validering
+        const isDateInvalid = startVal && endVal && (end < start);
         document.getElementById('dateError').style.display = isDateInvalid ? 'block' : 'none';
 
-        // 2. Sjekk 16-dagers regelen (kun for egen sykdom)
+        // 2. Maks 3 dager på egenmelding (Egen sykdom)
+        let isDurationInvalid = false;
+        if (type === 'Egenmelding' && startVal && endVal) {
+            const diffTime = Math.abs(end - start);
+            const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24)) + 1;
+            if (diffDays > 3) isDurationInvalid = true;
+        }
+        document.getElementById('durationError').style.display = isDurationInvalid ? 'block' : 'none';
+
+        // 3. 16-dagers regelen mellom fravær (Kun for egenmelding egen sykdom)
         let isRuleInvalid = false;
         if (type === 'Egenmelding' && startVal) {
             const archive = JSON.parse(localStorage.getItem('haga_archive') || '[]');
-            const lastSykemelding = archive.find(p => p.type === 'Sykemelding');
+            // Sjekker alle typer fravær (Sykemelding ELLER Egenmelding) i arkivet
+            const lastFravær = archive.find(p => p.type === 'Sykemelding' || p.type === 'Egenmelding');
             
-            if (lastSykemelding) {
-                const lastEnd = new Date(lastSykemelding.end);
+            if (lastFravær) {
+                const lastEnd = new Date(lastFravær.end);
                 const currentStart = new Date(startVal);
                 const diffDays = (currentStart - lastEnd) / (1000 * 60 * 60 * 24);
                 
-                if (diffDays >= 0 && diffDays < 16) {
-                    isRuleInvalid = true;
-                }
+                if (diffDays >= 0 && diffDays < 16) isRuleInvalid = true;
             }
         }
         document.getElementById('ruleError').style.display = isRuleInvalid ? 'block' : 'none';
 
-        // Sperr arkivering hvis feil finnes
-        document.getElementById('archiveBtn').disabled = isDateInvalid || isRuleInvalid;
+        // Sperr arkivering
+        document.getElementById('archiveBtn').disabled = isDateInvalid || isDurationInvalid || isRuleInvalid;
 
         const timerUke = (stilling / 100) * ((100 - sykemelding) / 100) * 37.5;
         document.getElementById('result').innerText = timerUke.toLocaleString('no-NO', { minimumFractionDigits: 2 });
@@ -222,14 +234,14 @@
         twelveMonthsAgo.setFullYear(now.getFullYear() - 1);
         
         const egenmeldinger = archive.filter(p => p.type === 'Egenmelding' && new Date(p.start) > twelveMonthsAgo);
-        const syktBarnDager = archive
+        const sykt barn dager = archive
             .filter(p => p.type === 'Sykt barn' && new Date(p.start).getFullYear() === now.getFullYear())
             .reduce((total, p) => total + ((new Date(p.end) - new Date(p.start)) / 86400000 + 1), 0);
 
         const warningBox = document.getElementById('trendWarning');
         let warnings = [];
         if (egenmeldinger.length >= 4) warnings.push(`<strong>OBS:</strong> 4 egenmeldinger brukt siste 12 mnd.`);
-        if (syktBarnDager >= 10) warnings.push(`<strong>OBS:</strong> ${syktBarnDager}/10 dager sykt barn brukt i år.`);
+        if (sykt barn dager >= 10) warnings.push(`<strong>OBS:</strong> ${sykt barn dager}/10 dager sykt barn brukt i år.`);
 
         warningBox.style.display = (warnings.length > 0) ? 'block' : 'none';
         warningBox.innerHTML = warnings.join('<br>');
@@ -279,7 +291,7 @@
         localStorage.setItem('haga_archive', JSON.stringify(archive));
         checkTrends();
         renderArchive();
-        calculate(); // Oppdaterer validering i tilfelle en sperre ble fjernet
+        calculate();
     }
 
     function exportToPDF() {
@@ -297,7 +309,6 @@
         doc.setTextColor(0, 0, 0);
         doc.text(`Ansatt: ${name}`, 20, 35);
         doc.text(`Butikk: ${store}`, 20, 40);
-        doc.text(`Dato generert: ${new Date().toLocaleDateString('nb-NO')}`, 20, 45);
 
         const tableRows = archive.map(item => [
             item.type === 'Sykemelding' ? `Sykemelding ${item.grad}%` : item.type,
@@ -307,11 +318,10 @@
         ]);
 
         doc.autoTable({
-            startY: 55,
+            startY: 50,
             head: [['Type', 'Periode', 'Stillingsstr.', 'Arbeidstid']],
             body: tableRows,
-            headStyles: { fillColor: [24, 150, 30] },
-            theme: 'grid'
+            headStyles: { fillColor: [24, 150, 30] }
         });
 
         doc.save(`Fravær_${name.replace(/\s+/g, '_')}.pdf`);
